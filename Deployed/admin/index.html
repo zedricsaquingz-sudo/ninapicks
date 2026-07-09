@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nina Picks — Restaurant Admin</title>
+<style>
+:root{
+  --bg:#0A0A0F;--card:#161625;--card2:#1E1E32;--border:#2A2A45;
+  --primary:#7C3AED;--accent:#A78BFA;--txt:#FFFFFF;--txt2:#A1A1AA;
+  --success:#34D399;--warn:#FBBF24;--danger:#F87171;--radius:12px;
+  color-scheme:dark;
+}
+/* Follows the OS/browser light-dark preference automatically — this is
+   the same media feature Windows, macOS, iOS, and Android all report,
+   so no separate "mobile" handling is needed. */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#F7F6FB;--card:#FFFFFF;--card2:#F1EFFA;--border:#E1DEF0;
+    --primary:#7C3AED;--accent:#6D28D9;--txt:#17171F;--txt2:#5B5B72;
+    --success:#059669;--warn:#D97706;--danger:#DC2626;
+    color-scheme:light;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ── HEADER ── */
+header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:16px 24px;box-shadow:0 4px 24px rgba(124,58,237,0.15);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-size:1.3rem;font-weight:800;color:var(--txt);}
+.logo span{color:var(--accent);}
+.logo sub{font-size:0.62rem;color:var(--txt2);font-weight:400;display:block;margin-top:1px;letter-spacing:0.3px;}
+.session-info{font-size:0.8rem;color:var(--txt2);display:flex;align-items:center;gap:12px;}
+.btn-logout{
+  padding:6px 14px;border-radius:7px;border:1px solid var(--border);
+  background:var(--card2);color:var(--txt2);font-size:0.77rem;cursor:pointer;transition:all 0.15s;
+}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger);}
+
+/* ── PAGE ── */
+.page{max-width:720px;margin:0 auto;padding:28px 20px 60px;}
+
+/* ── LOGIN CARD ── */
+.login-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:36px 32px;margin-top:60px;
+}
+.login-card h2{font-size:1.3rem;font-weight:700;margin-bottom:6px;color:var(--txt);}
+.login-card p{font-size:0.82rem;color:var(--txt2);margin-bottom:24px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.field label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt2);}
+.field select,.field input{
+  padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.87rem;
+}
+.field select:focus,.field input:focus{outline:none;border-color:var(--accent);}
+.field select option{background:var(--card2);}
+.err{
+  display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);
+  color:var(--danger);font-size:0.8rem;padding:9px 12px;border-radius:8px;margin-bottom:12px;
+}
+.btn-primary{
+  width:100%;padding:13px;border-radius:var(--radius);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  font-size:0.92rem;font-weight:700;transition:all 0.18s;
+  box-shadow:0 4px 20px rgba(124,58,237,0.35);
+}
+.btn-primary:hover{box-shadow:0 6px 28px rgba(124,58,237,0.5);}
+.btn-primary:disabled{opacity:0.55;cursor:not-allowed;}
+
+/* ── ADMIN PANEL ── */
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);
+}
+.panel-title{font-size:1.1rem;font-weight:700;color:var(--txt);}
+.panel-sub{font-size:0.78rem;color:var(--txt2);margin-top:3px;}
+
+.status-card{
+  background:var(--card);border:1.5px solid var(--primary);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  box-shadow:0 4px 20px rgba(124,58,237,0.15);
+}
+.status-card-title{font-size:0.88rem;font-weight:700;color:var(--txt);}
+.status-card-sub{font-size:0.74rem;color:var(--txt2);margin-top:2px;}
+
+.bulk-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.btn-bulk{
+  padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt2);font-size:0.78rem;cursor:pointer;transition:all 0.15s;
+}
+.btn-bulk:hover{border-color:var(--accent);color:var(--accent);}
+.btn-bulk.green:hover{border-color:var(--success);color:var(--success);}
+.btn-bulk.red:hover{border-color:var(--danger);color:var(--danger);}
+
+/* ── MENU ROWS ── */
+.menu-row{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;
+  gap:12px;transition:border-color 0.15s;
+}
+.menu-row:hover{border-color:var(--border);}
+.menu-row.unavailable{opacity:0.55;}
+.menu-row-left{flex:1;min-width:0;}
+.menu-row-name{font-size:0.88rem;font-weight:600;color:var(--txt);margin-bottom:3px;}
+.menu-row-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.avail-chip{
+  font-size:0.66rem;padding:2px 8px;border-radius:10px;font-weight:600;
+}
+.avail-chip.yes{background:rgba(52,211,153,0.15);color:var(--success);}
+.avail-chip.no{background:rgba(248,113,113,0.12);color:var(--danger);}
+.item-code{font-size:0.64rem;color:#52526A;}
+
+/* price editor inline */
+.price-editor{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.price-input{
+  width:90px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.82rem;
+}
+.price-input:focus{outline:none;border-color:var(--accent);}
+.btn-price-save{
+  padding:5px 10px;border-radius:6px;border:none;cursor:pointer;
+  background:rgba(124,58,237,0.2);color:var(--accent);font-size:0.73rem;
+  font-weight:600;transition:background 0.15s;
+}
+.btn-price-save:hover{background:rgba(124,58,237,0.35);}
+.price-saved-tick{font-size:0.75rem;color:var(--success);display:none;}
+
+/* toggle */
+.toggle-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.toggle-label{font-size:0.66rem;font-weight:600;}
+.toggle-label.on{color:var(--success);}
+.toggle-label.off{color:var(--danger);}
+.toggle{position:relative;display:inline-block;width:42px;height:23px;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{
+  position:absolute;cursor:pointer;inset:0;background:rgba(248,113,113,0.25);
+  border-radius:23px;transition:.3s;border:1.5px solid rgba(248,113,113,0.4);
+}
+.slider:before{
+  content:"";position:absolute;height:15px;width:15px;left:3px;bottom:3px;
+  background:var(--danger);border-radius:50%;transition:.3s;
+}
+input:checked + .slider{background:rgba(52,211,153,0.2);border-color:rgba(52,211,153,0.4);}
+input:checked + .slider:before{transform:translateX(19px);background:var(--success);}
+
+/* ── SAVE BAR ── */
+.save-bar{
+  position:fixed;bottom:0;left:0;right:0;background:var(--card);
+  border-top:1px solid var(--border);padding:12px 20px;
+  display:flex;align-items:center;gap:12px;justify-content:center;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.3);
+}
+.btn-save{
+  padding:12px 32px;border-radius:var(--radius);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  font-size:0.92rem;font-weight:700;transition:all 0.18s;
+  box-shadow:0 4px 20px rgba(124,58,237,0.35);
+}
+.btn-save:hover{box-shadow:0 6px 28px rgba(124,58,237,0.5);}
+.btn-save:disabled{opacity:0.55;cursor:not-allowed;}
+.save-msg{
+  display:none;font-size:0.82rem;color:var(--success);font-weight:600;
+  background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);
+  padding:8px 14px;border-radius:8px;
+}
+
+/* ── LOADING ── */
+.loading-ring{
+  display:flex;align-items:center;gap:10px;
+  padding:32px 0;color:var(--txt2);font-size:0.85rem;justify-content:center;
+}
+.ring{
+  width:18px;height:18px;border:2.5px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;
+  animation:spin 0.7s linear infinite;flex-shrink:0;
+}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ── ORDER CARDS ───────────────────────────────────────────────────── */
+.order-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:10px;
+}
+.order-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;}
+.order-id{font-family:monospace;font-size:0.78rem;font-weight:700;color:var(--accent);}
+.order-ts{font-size:0.7rem;color:var(--txt2);}
+.order-customer{font-size:0.84rem;font-weight:600;color:var(--txt);margin-bottom:2px;}
+.order-items{font-size:0.76rem;color:var(--txt2);margin-bottom:8px;line-height:1.5;}
+.order-total{font-size:0.82rem;font-weight:700;color:var(--success);}
+.order-footer{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.status-badge{font-size:0.7rem;font-weight:700;padding:3px 9px;border-radius:10px;}
+.status-Pending   {background:rgba(251,191,36,0.12);color:#FBBF24;}
+.status-Accepted  {background:rgba(52,211,153,0.12);color:#34D399;}
+.status-Preparing {background:rgba(124,58,237,0.15);color:#A78BFA;}
+.status-ReadyforPickup   {background:rgba(251,146,60,0.15);color:#FB923C;}
+.status-PickedUpOntheWay {background:rgba(56,189,248,0.12);color:#38BDF8;}
+.status-Delivered {background:rgba(16,185,129,0.18);color:#10B981;}
+.status-Cancelled {background:rgba(248,113,113,0.12);color:#F87171;}
+.order-driver-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.order-driver-row select{flex:1;min-width:120px;padding:7px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.78rem;}
+.btn-assign-driver{padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:var(--card2);color:var(--accent);font-size:0.76rem;cursor:pointer;white-space:nowrap;}
+.btn-assign-driver:hover{border-color:var(--accent);}
+.driver-assigned-note{font-size:0.72rem;color:var(--txt2);margin-bottom:2px;}
+.order-status-select{
+  padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.76rem;cursor:pointer;flex:1;min-width:140px;
+}
+.order-status-select:focus{outline:none;border-color:var(--accent);}
+.btn-update-status{
+  padding:5px 12px;border-radius:6px;border:none;
+  background:var(--primary);color:#fff;font-size:0.76rem;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
+.btn-update-status:disabled{opacity:0.5;cursor:not-allowed;}
+/* These status colors are set on literal hex values rather than the
+   --success/--warn/etc vars above, so they need their own light-mode
+   pass — on a white card the original bright/neon shades (tuned for a
+   near-black background) fall below readable contrast. Placed at the
+   end of the stylesheet (not next to :root) so it correctly wins the
+   cascade over the plain .status-* rules above, which share the same
+   specificity and would otherwise win by simply appearing later. */
+@media (prefers-color-scheme: light){
+  .status-Pending          {background:rgba(217,119,6,0.10);  color:#B45309;}
+  .status-Accepted         {background:rgba(4,120,87,0.10);   color:#047857;}
+  .status-Preparing        {background:rgba(109,40,217,0.10); color:#6D28D9;}
+  .status-ReadyforPickup   {background:rgba(194,65,12,0.10);  color:#C2410C;}
+  .status-PickedUpOntheWay {background:rgba(3,105,161,0.10);  color:#0369A1;}
+  .status-Delivered        {background:rgba(4,120,87,0.14);   color:#047857;}
+  .status-Cancelled        {background:rgba(185,28,28,0.10);  color:#B91C1C;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    🦅 Nina<span>Picks</span>
+    <sub>Restaurant Admin Panel</sub>
+  </div>
+  <div class="session-info" id="sessionInfo" style="display:none;">
+    <span id="sessionName"></span>
+    <button class="btn-logout" onclick="doLogout()">Sign out</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div class="page" id="loginSection" style="display:none;">
+  <div class="login-card">
+    <h2>Restaurant Login</h2>
+    <p>Sign in with your restaurant ID and 4-digit PIN to manage your menu.</p>
+    <div class="field">
+      <label>Restaurant</label>
+      <select id="loginRestId">
+        <option value="">Select your restaurant…</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>4-digit PIN</label>
+      <input id="loginPin" type="password" maxlength="4" inputmode="numeric"
+             placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="err" id="loginError"></div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Login</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="page" id="adminSection" style="display:none;">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title" id="panelTitle">Menu Management</div>
+      <div class="panel-sub">Toggle availability · Edit prices · Save to sync</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn-bulk" id="tabMenu" onclick="switchAdminTab('menu')" style="font-size:0.77rem;color:var(--accent);border-color:var(--accent);">🍽️ Menu</button>
+      <button class="btn-bulk" id="tabOrders" onclick="switchAdminTab('orders')" style="font-size:0.77rem;">📋 Orders</button>
+      <button class="btn-bulk" onclick="loadMenu()" style="font-size:0.77rem;">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="status-card">
+    <div>
+      <div class="status-card-title">Shop Status</div>
+      <div class="status-card-sub">Customers can't place orders while marked Closed</div>
+    </div>
+    <div class="toggle-wrap">
+      <span class="toggle-label on" id="statusLbl">Open</span>
+      <label class="toggle">
+        <input type="checkbox" id="statusChk" checked onchange="toggleRestaurantStatus()">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="bulk-actions">
+    <button class="btn-bulk green" onclick="markAll(true)">✅ All Available</button>
+    <button class="btn-bulk red"   onclick="markAll(false)">🚫 All Unavailable</button>
+  </div>
+
+  <div id="menuList">
+    <div class="loading-ring"><div class="ring"></div> Loading menu…</div>
+  </div>
+
+  <div style="height:70px;"></div><!-- spacer for save bar -->
+
+  <!-- ── ORDERS TAB ─────────────────────────────────────────────── -->
+  <div id="ordersTab" style="display:none;padding-bottom:80px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <input id="orderSearchInput" type="text" placeholder="Search by Order ID or customer name…"
+        oninput="filterOrders()"
+        style="flex:1;min-width:180px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.82rem;">
+      <select id="orderStatusFilter" onchange="filterOrders()"
+        style="padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.82rem;">
+        <option value="">All Statuses</option>
+        <option value="Pending">🕐 Pending</option>
+        <option value="Accepted">✅ Accepted</option>
+        <option value="Preparing">👨‍🍳 Preparing</option>
+        <option value="Delivered">🛵 Delivered</option>
+        <option value="Cancelled">❌ Cancelled</option>
+      </select>
+      <button class="btn-bulk" onclick="loadOrders()" style="font-size:0.77rem;">🔄 Refresh</button>
+    </div>
+    <div id="orderList">
+      <div class="loading-ring"><div class="ring"></div> Loading orders…</div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE BAR -->
+<div class="save-bar" id="saveBar" style="display:none;">
+  <span class="save-msg" id="saveMsg"></span>
+  <button class="btn-save" onclick="saveChanges()">💾 Save Changes</button>
+</div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════════════════════════
+//  NINA PICKS — ADMIN.HTML (Supabase)
+//  Migrated from Apps Script V2. Every function name, DOM id, and onclick
+//  handler below is unchanged from the old version — only what happens
+//  INSIDE each function (Apps Script fetch → Supabase query) changed.
+//  Because this is now a module, functions called from inline onclick=""
+//  attributes are explicitly re-attached to `window` near the bottom.
+// ══════════════════════════════════════════════════════════════════════════
+
+import { supabase } from '../supabase-client.js';
+import * as authApi from '../api/auth.js';
+import * as restaurantsApi from '../api/restaurants.js';
+import * as productsApi from '../api/products.js';
+import * as driversApi from '../api/drivers.js';
+import * as ordersApi from '../api/orders.js';
+
+// ── State ─────────────────────────────────────────────────────────────────
+let session   = null;  // { restId, name } — no PIN stored anymore; the real
+                        // credential is the Supabase Auth session, which
+                        // supabase-js persists/restores on its own.
+let menuItems = [];    // { productId, name, available, price, code }
+let pendingPriceChanges = {}; // productId → newPrice
+// productIds the user has actually clicked/toggled/edited since the last
+// successful save. saveChanges() only sends THESE to the backend — not
+// the whole menu — so an admin toggling one item doesn't get logged (in
+// the ops dashboard's "Menu Activity" feed) as having updated every item.
+let dirtyProductIds = new Set();
+let allRestaurantsAdmin = []; // full restaurant list, incl. status
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.onload = async () => {
+  // Try to restore session first — Supabase persists the auth session in
+  // localStorage on its own; we just need to check whether one exists and
+  // re-derive restId/name from the profile, instead of reading a PIN back
+  // out of sessionStorage like the old version did.
+  const profile = await authApi.getCurrentProfile();
+  if (profile && profile.restaurants) {
+    session = { restId: profile.restaurants.legacy_code, name: profile.restaurants.name };
+    await showAdminPanel();
+    return;
+  }
+
+  // Load restaurant list from API then show login
+  await loadRestaurantList();
+  document.getElementById('loginSection').style.display = 'block';
+
+  const logoutMsg = sessionStorage.getItem('np_logout_msg');
+  if (logoutMsg) {
+    sessionStorage.removeItem('np_logout_msg');
+    showAdminToast(logoutMsg);
+  }
+};
+
+async function loadRestaurantList() {
+  try {
+    const restaurants = await restaurantsApi.getRestaurants();
+    allRestaurantsAdmin = restaurants;
+    const sel = document.getElementById('loginRestId');
+    restaurants.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.id; o.textContent = r.name;
+      sel.appendChild(o);
+    });
+  } catch (_) {
+    // Fallback: show blank selector, login will still work via PIN verify
+    console.warn('Could not load restaurant list from API');
+  }
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const restId = document.getElementById('loginRestId').value;
+  const pin    = document.getElementById('loginPin').value.trim();
+  const errEl  = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!restId) { showErr('Please select your restaurant.'); return; }
+  if (!pin || pin.length !== 4) { showErr('Please enter your 4-digit PIN.'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Verifying…';
+
+  try {
+    const result = await authApi.login(restId, pin);
+    if (!result.success) { showErr(result.error || 'Incorrect PIN.'); return; }
+
+    const restName = document.getElementById('loginRestId').selectedOptions[0].textContent;
+    session = { restId, name: restName };
+    // No more sessionStorage.setItem — the Supabase session itself is what
+    // persists across reloads now (see window.onload above).
+    await showAdminPanel();
+  } catch (err) {
+    showErr('Could not connect. Try again.');
+    btn.disabled = false; btn.textContent = 'Login';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Login';
+}
+
+// ── Admin Panel ───────────────────────────────────────────────────────────
+async function showAdminPanel() {
+  document.getElementById('loginSection').style.display  = 'none';
+  document.getElementById('adminSection').style.display  = 'block';
+  document.getElementById('saveBar').style.display       = 'flex';
+  document.getElementById('sessionInfo').style.display   = 'flex';
+  document.getElementById('sessionName').textContent     = session.name;
+  document.getElementById('panelTitle').textContent      = session.name;
+  if (!allRestaurantsAdmin.length) await loadRestaurantList();
+  renderStatusToggle();
+  await loadMenu();
+}
+
+function renderStatusToggle() {
+  const r = allRestaurantsAdmin.find(x => x.id === session.restId);
+  const isClosed = !!r && r.status === 'Closed';
+  const chk = document.getElementById('statusChk');
+  const lbl = document.getElementById('statusLbl');
+  chk.checked = !isClosed;
+  lbl.textContent = isClosed ? 'Closed' : 'Open';
+  lbl.className = `toggle-label ${isClosed ? 'off' : 'on'}`;
+}
+
+async function toggleRestaurantStatus() {
+  const chk = document.getElementById('statusChk');
+  const lbl = document.getElementById('statusLbl');
+  const newStatus = chk.checked ? 'Open' : 'Closed';
+  chk.disabled = true;
+
+  try {
+    await restaurantsApi.setRestaurantStatus(session.restId, newStatus);
+
+    lbl.textContent = newStatus;
+    lbl.className = `toggle-label ${newStatus === 'Open' ? 'on' : 'off'}`;
+    const r = allRestaurantsAdmin.find(x => x.id === session.restId);
+    if (r) r.status = newStatus;
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'BUST_ALL' });
+    }
+    showAdminToast(newStatus === 'Closed' ? '🚫 Shop marked Closed — ordering disabled for customers' : '✅ Shop marked Open');
+  } catch (err) {
+    chk.checked = !chk.checked; // revert
+    showAdminToast('Failed to update status: ' + err.message);
+  }
+  chk.disabled = false;
+}
+
+async function loadMenu() {
+  document.getElementById('menuList').innerHTML =
+    '<div class="loading-ring"><div class="ring"></div> Loading menu…</div>';
+  pendingPriceChanges = {};
+  dirtyProductIds = new Set();
+
+  try {
+    const products = await productsApi.getMenu(session.restId);
+
+    // Flatten: one row per product (with variants shown as sub-chips)
+    menuItems = products.map(p => ({
+      productId: p.productId,
+      name:      p.name,
+      category:  p.category,
+      available: p.available,
+      price:     p.basePrice,
+      variants:  p.variants || [],
+    }));
+
+    renderMenu();
+  } catch (err) {
+    document.getElementById('menuList').innerHTML =
+      `<div style="padding:20px;color:var(--danger);">❌ ${err.message}</div>`;
+  }
+}
+
+function renderMenu() {
+  const list = document.getElementById('menuList');
+  if (!menuItems.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--txt2);">No products found.</div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  menuItems.forEach((item, i) => {
+    const cat = item.category || 'Other';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ item, i });
+  });
+
+  list.innerHTML = Object.entries(groups).map(([cat, entries]) => `
+    <div style="margin-bottom:18px;">
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--txt2);margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+        ${cat}
+        <span style="flex:1;height:1px;background:var(--border);display:inline-block;"></span>
+      </div>
+      ${entries.map(({ item, i }) => renderMenuRow(item, i)).join('')}
+    </div>
+  `).join('');
+}
+
+function renderMenuRow(item, i) {
+  const variantChips = item.variants.length
+    ? item.variants.map(v => `<span style="font-size:0.63rem;padding:2px 6px;border-radius:8px;background:rgba(124,58,237,0.15);color:var(--accent);margin-right:3px;">${v.variantName}</span>`).join('')
+    : '';
+
+  return `
+    <div class="menu-row ${item.available ? '' : 'unavailable'}" id="row-${i}">
+      <div class="menu-row-left">
+        <div class="menu-row-name">${item.name}</div>
+        <div class="menu-row-meta" style="margin-top:4px;">
+          <span class="avail-chip ${item.available ? 'yes' : 'no'}" id="chip-${i}">
+            ${item.available ? '✅ Available' : '🚫 Unavailable'}
+          </span>
+          <span class="item-code">${item.productId}</span>
+        </div>
+        ${variantChips ? `<div style="margin-top:6px;">${variantChips}</div>` : ''}
+        <div class="price-editor">
+          <span style="font-size:0.72rem;color:var(--txt2);">₱</span>
+          <input class="price-input" id="price-${i}" type="number" min="0" step="1"
+                 value="${item.price ?? ''}" placeholder="0"
+                 onchange="priceChanged(${i})" oninput="priceChanged(${i})">
+          <button class="btn-price-save" onclick="savePrice(${i})" id="psave-${i}" style="display:none;">Save price</button>
+          <span class="price-saved-tick" id="ptick-${i}">✓ Updated</span>
+        </div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-label ${item.available ? 'on' : 'off'}" id="lbl-${i}">
+          ${item.available ? 'On' : 'Off'}
+        </span>
+        <label class="toggle">
+          <input type="checkbox" id="chk-${i}" ${item.available ? 'checked' : ''}
+                 onchange="toggleItem(${i})">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>`;
+}
+
+// ── Price change (inline, queued) ─────────────────────────────────────────
+function priceChanged(i) {
+  const btn  = document.getElementById(`psave-${i}`);
+  const tick = document.getElementById(`ptick-${i}`);
+  btn.style.display  = 'inline-flex';
+  tick.style.display = 'none';
+}
+
+function savePrice(i) {
+  const val = parseFloat(document.getElementById(`price-${i}`).value);
+  if (isNaN(val) || val < 0) { showAdminToast('Invalid price'); return; }
+  menuItems[i].price = val;
+  pendingPriceChanges[menuItems[i].productId] = val;
+  dirtyProductIds.add(menuItems[i].productId);
+  document.getElementById(`psave-${i}`).style.display = 'none';
+  const tick = document.getElementById(`ptick-${i}`);
+  tick.style.display = 'inline';
+  setTimeout(() => tick.style.display = 'none', 2000);
+  showAdminToast('Price queued — click Save Changes to sync');
+}
+
+// ── Toggle ────────────────────────────────────────────────────────────────
+function toggleItem(i) {
+  menuItems[i].available = document.getElementById(`chk-${i}`).checked;
+  dirtyProductIds.add(menuItems[i].productId);
+  const row  = document.getElementById(`row-${i}`);
+  const lbl  = document.getElementById(`lbl-${i}`);
+  const chip = document.getElementById(`chip-${i}`);
+  row.classList.toggle('unavailable', !menuItems[i].available);
+  lbl.textContent = menuItems[i].available ? 'On' : 'Off';
+  lbl.className   = `toggle-label ${menuItems[i].available ? 'on' : 'off'}`;
+  chip.className  = `avail-chip ${menuItems[i].available ? 'yes' : 'no'}`;
+  chip.textContent = menuItems[i].available ? '✅ Available' : '🚫 Unavailable';
+  document.getElementById('saveMsg').style.display = 'none';
+}
+
+function markAll(isAvailable) {
+  menuItems.forEach((item, i) => {
+    item.available = isAvailable;
+    document.getElementById(`chk-${i}`).checked = isAvailable;
+    toggleItem(i); // re-runs UI update
+  });
+  document.getElementById('saveMsg').style.display = 'none';
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────
+async function saveChanges() {
+  const btn = document.querySelector('.btn-save');
+
+  if (dirtyProductIds.size === 0) {
+    showAdminToast('No changes to save');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+  document.getElementById('saveMsg').style.display = 'none';
+
+  // Only items actually touched this session — NOT the whole menu (see
+  // updateMenu() in api/products.js for the matching backend-side fix:
+  // it only issues an UPDATE per product that changed, and the
+  // set_last_updated_if_changed DB trigger only bumps last_updated on a
+  // genuine value change).
+  const updates = menuItems
+    .filter(m => dirtyProductIds.has(m.productId))
+    .map(m => {
+      const upd = { productId: m.productId, name: m.name, available: m.available };
+      if (pendingPriceChanges[m.productId] !== undefined) {
+        upd.price = pendingPriceChanges[m.productId];
+      }
+      return upd;
+    });
+
+  try {
+    const result = await productsApi.updateMenu(session.restId, updates);
+
+    // Bust service worker cache for this restaurant
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'BUST_MENU_CACHE', restId: session.restId
+      });
+    }
+
+    pendingPriceChanges = {};
+    dirtyProductIds = new Set();
+    const msg = document.getElementById('saveMsg');
+    msg.textContent = `✅ Saved! ${result.rowsUpdated ?? '?'} items updated`;
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 5000);
+
+  } catch (err) {
+    alert('Save failed: ' + err.message);
+  }
+
+  btn.disabled = false; btn.textContent = '💾 Save Changes';
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────
+async function doLogout() {
+  await authApi.logout();
+  // Full reload (rather than manually toggling divs) guarantees every bit
+  // of in-memory state — session, cached menu, pending edits — is wiped,
+  // and window.onload's own "no profile -> show login" branch takes over
+  // from a clean slate. Also matches driver.html's logout behavior.
+  sessionStorage.setItem('np_logout_msg', 'You have been logged out.');
+  location.reload();
+}
+
+// ── Admin Tab Switcher ────────────────────────────────────────────────────
+function switchAdminTab(tab) {
+  const menuTab   = document.getElementById('menuList');
+  const ordTab    = document.getElementById('ordersTab');
+  const statusCrd = document.querySelector('.status-card');
+  const bulkAct   = document.querySelector('.bulk-actions');
+  const tabMenuBtn= document.getElementById('tabMenu');
+  const tabOrdBtn = document.getElementById('tabOrders');
+
+  if (tab === 'menu') {
+    menuTab.style.display   = '';
+    if (statusCrd) statusCrd.style.display = '';
+    if (bulkAct)   bulkAct.style.display   = '';
+    ordTab.style.display    = 'none';
+    tabMenuBtn.style.color  = 'var(--accent)';
+    tabMenuBtn.style.borderColor = 'var(--accent)';
+    tabOrdBtn.style.color   = '';
+    tabOrdBtn.style.borderColor = '';
+  } else {
+    menuTab.style.display   = 'none';
+    if (statusCrd) statusCrd.style.display = 'none';
+    if (bulkAct)   bulkAct.style.display   = 'none';
+    ordTab.style.display    = '';
+    tabOrdBtn.style.color   = 'var(--accent)';
+    tabOrdBtn.style.borderColor = 'var(--accent)';
+    tabMenuBtn.style.color  = '';
+    tabMenuBtn.style.borderColor = '';
+    loadOrders();
+  }
+}
+
+// ── Order Management ──────────────────────────────────────────────────────
+const ORDER_STATUSES = ['Pending', 'Accepted', 'Preparing', 'Ready for Pickup', 'Picked Up / On the Way', 'Delivered', 'Cancelled'];
+let allOrders  = [];
+let allDrivers = []; // { id, name, phone, availability }
+
+function statusSlug(s) { return String(s || '').replace(/[^a-zA-Z0-9]+/g, ''); }
+
+async function loadDrivers() {
+  // Always refetch (no caching) — availability changes frequently as
+  // drivers accept/complete deliveries; a stale list would show drivers
+  // as available when they're actually busy.
+  try {
+    allDrivers = await driversApi.getDrivers();
+  } catch (_) {
+    // Non-fatal: driver dropdown will just show whatever was last loaded
+  }
+}
+
+async function loadOrders() {
+  const listEl = document.getElementById('orderList');
+  listEl.innerHTML = '<div class="loading-ring"><div class="ring"></div> Loading orders…</div>';
+  try {
+    await loadDrivers();
+    allOrders = await ordersApi.getOrders(session.restId);
+    renderOrders(allOrders);
+  } catch (err) {
+    listEl.innerHTML = `<div style="color:var(--danger);font-size:0.84rem;padding:16px 0;">⚠️ ${err.message}</div>`;
+  }
+}
+
+function filterOrders() {
+  const q      = document.getElementById('orderSearchInput').value.trim().toLowerCase();
+  const status = document.getElementById('orderStatusFilter').value;
+  const filtered = allOrders.filter(o => {
+    if (status && o.status !== status) return false;
+    if (q && !o.orderId?.toLowerCase().includes(q) && !o.name?.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderOrders(filtered);
+}
+
+function renderOrders(orders) {
+  const listEl = document.getElementById('orderList');
+  if (!orders.length) {
+    listEl.innerHTML = '<div style="color:var(--txt2);font-size:0.84rem;padding:20px 0;text-align:center;">No orders found.</div>';
+    return;
+  }
+  const sorted = [...orders].sort((a, b) => {
+    if (!a.timestamp || !b.timestamp) return 0;
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+  const driverOpts = (list, selectedId) => {
+    const blank = `<option value="">— Unassigned —</option>`;
+    const eligible = list.filter(d => d.availability === 'Available' || d.id === selectedId);
+    if (!eligible.length) {
+      return blank + `<option value="" disabled>No available drivers</option>`;
+    }
+    const opts = eligible.map(d => {
+      const tag = d.id === selectedId && d.availability !== 'Available' ? ` (${d.availability})` : '';
+      return `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${d.id} — ${d.name}${tag}</option>`;
+    }).join('');
+    return blank + opts;
+  };
+  listEl.innerHTML = sorted.map(o => {
+    const status = o.status || 'Pending';
+    const slug = statusSlug(status);
+    const statusOpts = ORDER_STATUSES.map(s =>
+      `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`
+    ).join('');
+    return `<div class="order-card" id="ocard-${o.orderId}">
+      <div class="order-card-head">
+        <span class="order-id">${o.orderId || '—'}</span>
+        <span class="order-ts">${o.timestamp || ''}</span>
+      </div>
+      <div class="order-customer">${o.name || 'Unknown'} · ${o.phone || ''}</div>
+      <div class="order-items">${o.items || 'No items listed'}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.78rem;color:var(--txt2);margin-bottom:8px;">
+        ${o.paymentMethod ? `<span>💳 ${o.paymentMethod}</span>` : ''}
+        ${o.total ? `<span class="order-total">₱${o.total}</span>` : ''}
+      </div>
+      ${o.notes ? `<div style="font-size:0.75rem;color:var(--accent);margin-bottom:8px;padding:6px 10px;background:rgba(124,58,237,0.08);border-radius:6px;">📝 ${o.notes}</div>` : ''}
+      ${o.driverName ? `<div class="driver-assigned-note">🛵 Assigned: ${o.driverName}${o.driverPhone ? ' · ' + o.driverPhone : ''}</div>` : ''}
+      <div class="order-driver-row">
+        <select id="drv-${o.orderId}">${driverOpts(allDrivers, o.driverId || '')}</select>
+        <button class="btn-assign-driver" onclick="assignDriver('${o.orderId}')">Assign</button>
+      </div>
+      <div class="order-footer">
+        <span class="status-badge status-${slug}">${status}</span>
+        <select class="order-status-select" id="sel-${o.orderId}">${statusOpts}</select>
+        <button class="btn-update-status" onclick="updateOrderStatus('${o.orderId}')">Update</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function assignDriver(orderId) {
+  const sel = document.getElementById(`drv-${orderId}`);
+  const btn = sel ? sel.parentElement.querySelector('.btn-assign-driver') : null;
+  const driverId = sel ? sel.value : '';
+  if (!session) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await ordersApi.assignDriver(orderId, driverId);
+    const ord = allOrders.find(o => o.orderId === orderId);
+    const drv = allDrivers.find(d => d.id === driverId);
+    if (ord) { ord.driverId = driverId; ord.driverName = drv ? drv.name : ''; }
+    showAdminToast(drv ? `✅ ${orderId} → ${drv.name}` : `✅ ${orderId} unassigned`);
+  } catch (err) {
+    showAdminToast('⚠️ ' + (err.message || 'Could not assign driver'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Assign'; }
+  }
+}
+
+async function updateOrderStatus(orderId) {
+  const sel = document.getElementById(`sel-${orderId}`);
+  const btn = sel ? sel.parentElement.querySelector('.btn-update-status') : null;
+  const newStatus = sel ? sel.value : null;
+  if (!newStatus || !session) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  try {
+    await ordersApi.updateOrderStatus(orderId, newStatus);
+    const ord = allOrders.find(o => o.orderId === orderId);
+    if (ord) ord.status = newStatus;
+    const card = document.getElementById(`ocard-${orderId}`);
+    if (card) {
+      const badge = card.querySelector('.status-badge');
+      if (badge) {
+        badge.textContent = newStatus;
+        badge.className = `status-badge status-${statusSlug(newStatus)}`;
+      }
+    }
+    showAdminToast(`✅ Order ${orderId} → ${newStatus}`);
+  } catch (err) {
+    showAdminToast('⚠️ Could not update status: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Update'; }
+  }
+}
+
+let toastEl = null;
+function showAdminToast(msg) {
+  if (!toastEl) {
+    toastEl = document.createElement('div');
+    toastEl.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border);color:var(--txt);padding:9px 16px;border-radius:10px;font-size:0.8rem;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.style.opacity = '1';
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(() => toastEl.style.opacity = '0', 2500);
+}
+
+// ── Re-attach functions referenced by inline onclick/onchange handlers ────
+// (needed because <script type="module"> no longer puts top-level
+// function declarations on `window` automatically)
+Object.assign(window, {
+  doLogin, toggleRestaurantStatus, priceChanged, savePrice, toggleItem,
+  markAll, saveChanges, doLogout, switchAdminTab, filterOrders,
+  assignDriver, updateOrderStatus, loadOrders, loadMenu,
+});
+</script>
+</body>
+
+</html>

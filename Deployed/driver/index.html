@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nina Picks — Driver</title>
+<style>
+:root{
+  --bg:#0A0A0F;--card:#161625;--card2:#1E1E32;--border:#2A2A45;
+  --primary:#7C3AED;--accent:#A78BFA;--txt:#FFFFFF;--txt2:#A1A1AA;
+  --success:#34D399;--warn:#FBBF24;--danger:#F87171;--radius:12px;
+  color-scheme:dark;
+}
+/* Follows the OS/browser light-dark preference automatically — this is
+   the same media feature Windows, macOS, iOS, and Android all report,
+   so no separate "mobile" handling is needed. */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#F7F6FB;--card:#FFFFFF;--card2:#F1EFFA;--border:#E1DEF0;
+    --primary:#7C3AED;--accent:#6D28D9;--txt:#17171F;--txt2:#5B5B72;
+    --success:#059669;--warn:#D97706;--danger:#DC2626;
+    color-scheme:light;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:16px 20px;box-shadow:0 4px 24px rgba(124,58,237,0.15);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-size:1.15rem;font-weight:800;}
+.logo span{color:var(--accent);}
+.logo sub{font-size:0.6rem;color:var(--txt2);font-weight:400;display:block;margin-top:1px;letter-spacing:0.3px;}
+.session-info{font-size:0.78rem;color:var(--txt2);}
+.btn-logout{
+  padding:6px 12px;border-radius:7px;border:1px solid var(--border);
+  background:var(--card2);color:var(--txt2);font-size:0.74rem;cursor:pointer;
+}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger);}
+
+.page{max-width:520px;margin:0 auto;padding:24px 16px 60px;}
+
+/* ── LOGIN ── */
+.login-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px 26px;margin-top:50px;
+}
+.login-card h2{font-size:1.2rem;font-weight:700;margin-bottom:6px;}
+.login-card p{font-size:0.82rem;color:var(--txt2);margin-bottom:22px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.field label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt2);}
+.field input{
+  padding:11px 12px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.9rem;
+}
+.field input:focus{outline:none;border-color:var(--accent);}
+.err{
+  display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);
+  color:var(--danger);font-size:0.8rem;padding:9px 12px;border-radius:8px;margin-bottom:12px;
+}
+.btn-primary{
+  width:100%;padding:13px;border-radius:var(--radius);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  font-size:0.9rem;font-weight:700;box-shadow:0 4px 20px rgba(124,58,237,0.35);
+}
+.btn-primary:disabled{opacity:0.55;cursor:not-allowed;}
+
+/* ── ORDERS ── */
+.panel-header{margin-bottom:16px;}
+.panel-title{font-size:1.05rem;font-weight:700;}
+.panel-sub{font-size:0.76rem;color:var(--txt2);margin-top:2px;}
+
+.order-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;
+}
+.order-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.order-id{font-weight:700;font-size:0.9rem;font-family:monospace;}
+.order-ts{font-size:0.7rem;color:var(--txt2);}
+.order-shop{font-size:0.86rem;font-weight:600;margin-bottom:4px;}
+.order-customer{font-size:0.8rem;color:var(--txt2);margin-bottom:4px;}
+.order-loc{font-size:0.78rem;color:var(--txt2);margin-bottom:10px;}
+.order-total{font-weight:700;color:var(--success);font-size:0.85rem;}
+
+.status-badge{font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:10px;display:inline-block;margin-bottom:10px;}
+.status-Pending{background:rgba(251,191,36,0.12);color:#FBBF24;}
+.status-Accepted{background:rgba(52,211,153,0.12);color:#34D399;}
+.status-Preparing{background:rgba(124,58,237,0.15);color:#A78BFA;}
+.status-ReadyforPickup{background:rgba(251,146,60,0.15);color:#FB923C;}
+.status-PickedUpOntheWay{background:rgba(56,189,248,0.12);color:#38BDF8;}
+.status-Delivered{background:rgba(16,185,129,0.18);color:#10B981;}
+.status-Cancelled{background:rgba(248,113,113,0.12);color:#F87171;}
+
+.driver-action-btn{
+  width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;
+  font-size:0.84rem;font-weight:700;color:#fff;
+}
+.driver-action-btn.pickup{background:linear-gradient(135deg,#38BDF8,#0EA5E9);}
+.driver-action-btn.deliver{background:linear-gradient(135deg,#10B981,#059669);}
+.driver-action-btn:disabled{opacity:0.55;cursor:not-allowed;}
+.waiting-note{font-size:0.78rem;color:var(--txt2);text-align:center;padding:8px 0;}
+
+.empty-state{color:var(--txt2);font-size:0.84rem;padding:30px 0;text-align:center;}
+.loading-ring{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:0.84rem;padding:20px 0;justify-content:center;}
+.ring{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.section-toggle{
+  font-size:0.78rem;color:var(--accent);cursor:pointer;text-align:center;
+  padding:10px 0;user-select:none;
+}
+
+/* ── AVAILABILITY TOGGLE ── */
+.avail-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 14px;margin-bottom:16px;
+}
+.avail-label{font-size:0.8rem;color:var(--txt2);}
+.avail-status{font-size:0.86rem;font-weight:700;margin-top:1px;}
+.avail-status.is-available{color:var(--success);}
+.avail-status.is-unavailable{color:var(--txt2);}
+.avail-status.is-busy{color:var(--warn);}
+.avail-switch{
+  position:relative;width:46px;height:26px;border-radius:14px;border:none;cursor:pointer;
+  background:var(--card2);flex-shrink:0;transition:background 0.2s;
+}
+.avail-switch::after{
+  content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:var(--txt2);transition:transform 0.2s,background 0.2s;
+}
+.avail-switch.on{background:rgba(52,211,153,0.25);}
+.avail-switch.on::after{transform:translateX(20px);background:var(--success);}
+.avail-switch:disabled{opacity:0.5;cursor:not-allowed;}
+/* These status colors are set on literal hex values rather than the
+   --success/--warn/etc vars above, so they need their own light-mode
+   pass — on a white card the original bright/neon shades (tuned for a
+   near-black background) fall below readable contrast. Placed at the
+   end of the stylesheet (not next to :root) so it correctly wins the
+   cascade over the plain .status-* rules above, which share the same
+   specificity and would otherwise win by simply appearing later. */
+@media (prefers-color-scheme: light){
+  .status-Pending          {background:rgba(217,119,6,0.10);  color:#B45309;}
+  .status-Accepted         {background:rgba(4,120,87,0.10);   color:#047857;}
+  .status-Preparing        {background:rgba(109,40,217,0.10); color:#6D28D9;}
+  .status-ReadyforPickup   {background:rgba(194,65,12,0.10);  color:#C2410C;}
+  .status-PickedUpOntheWay {background:rgba(3,105,161,0.10);  color:#0369A1;}
+  .status-Delivered        {background:rgba(4,120,87,0.14);   color:#047857;}
+  .status-Cancelled        {background:rgba(185,28,28,0.10);  color:#B91C1C;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Nina<span>Picks</span><sub>Driver</sub></div>
+  <div id="headerRight"></div>
+</header>
+
+<div class="page">
+  <!-- LOGIN -->
+  <div class="login-card" id="loginSection" style="display:none;">
+    <h2>Driver Login</h2>
+    <p>Enter your Driver ID and PIN to see your assigned deliveries.</p>
+    <div class="err" id="loginError"></div>
+    <div class="field">
+      <label>Driver ID</label>
+      <input type="text" id="loginDriverId" placeholder="e.g. D001" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>PIN</label>
+      <input type="password" id="loginPin" placeholder="4-digit PIN" inputmode="numeric" maxlength="4" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Login</button>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="ordersSection" style="display:none;">
+    <div class="panel-header">
+      <div class="panel-title">My Deliveries</div>
+      <div class="panel-sub" id="panelSub">—</div>
+    </div>
+
+    <div class="avail-bar">
+      <div>
+        <div class="avail-label">Availability</div>
+        <div class="avail-status" id="availStatusText">—</div>
+      </div>
+      <button class="avail-switch" id="availSwitch" onclick="toggleAvailability()" aria-label="Toggle availability"></button>
+    </div>
+
+    <div id="orderList"></div>
+    <div class="section-toggle" id="historyToggle" onclick="toggleCompleted()" style="display:none;"></div>
+    <div id="completedList" style="display:none;"></div>
+  </div>
+</div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════════════════════════
+//  NINA PICKS — DRIVER.HTML (Supabase)
+//  Migrated from Apps Script. Function names/DOM ids unchanged; only the
+//  internals moved from fetch(API_URL, {action:...}) to Supabase.
+// ══════════════════════════════════════════════════════════════════════════
+
+import * as authApi from '../api/auth.js';
+import * as driversApi from '../api/drivers.js';
+import * as ordersApi from '../api/orders.js';
+
+let session   = null; // { driverId, name } — no PIN stored; Supabase Auth
+                       // session persists on its own (see window.onload).
+let allOrders = [];
+let currentAvailability = 'Not Available'; // 'Available' | 'Not Available' | 'Currently on Delivery'
+
+function statusSlug(s) { return String(s || '').replace(/[^a-zA-Z0-9]+/g, ''); }
+
+window.onload = async () => {
+  const profile = await authApi.getCurrentProfile();
+  if (profile && profile.drivers) {
+    session = { driverId: profile.drivers.driver_id, name: profile.drivers.name };
+    currentAvailability = profile.drivers.availability || 'Not Available';
+    showOrdersPanel();
+    renderAvailability();
+    await loadOrders();
+    return;
+  }
+  document.getElementById('loginSection').style.display = 'block';
+
+  const logoutMsg = sessionStorage.getItem('np_logout_msg');
+  if (logoutMsg) {
+    sessionStorage.removeItem('np_logout_msg');
+    showErr(logoutMsg); // reuses the existing message banner, just as a neutral notice
+    document.getElementById('loginError').style.background = '';
+  }
+};
+
+// ── Login ─────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const driverId = document.getElementById('loginDriverId').value.trim();
+  const pin      = document.getElementById('loginPin').value.trim();
+  const errEl    = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!driverId)             { showErr('Please enter your Driver ID.'); return; }
+  if (!pin || pin.length !== 4) { showErr('Please enter your 4-digit PIN.'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Verifying…';
+
+  try {
+    const result = await authApi.login(driverId, pin);
+    if (!result.success) { showErr(result.error || 'Login failed.'); return; }
+
+    const driverProfile = result.profile?.drivers;
+    session = { driverId: driverProfile?.driver_id || driverId, name: driverProfile?.name || driverId };
+    currentAvailability = driverProfile?.availability || 'Not Available';
+    showOrdersPanel();
+    renderAvailability();
+    await loadOrders();
+  } catch (err) {
+    showErr('Could not connect. Check your internet and try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Login';
+  }
+}
+
+function showErr(msg) {
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '⚠️ ' + msg;
+  errEl.style.display = 'block';
+}
+
+function showOrdersPanel() {
+  document.getElementById('loginSection').style.display = 'none';
+  document.getElementById('ordersSection').style.display = 'block';
+  document.getElementById('headerRight').innerHTML =
+    `<button class="btn-logout" onclick="logout()">Logout</button>`;
+  document.getElementById('panelSub').textContent = session.name || session.driverId;
+}
+
+async function logout() {
+  await authApi.logout();
+  sessionStorage.setItem('np_logout_msg', 'You have been logged out.');
+  location.reload();
+}
+
+// ── Load assigned orders ────────────────────────────────────────────────
+async function loadOrders() {
+  const listEl = document.getElementById('orderList');
+  listEl.innerHTML = '<div class="loading-ring"><div class="ring"></div> Loading deliveries…</div>';
+  try {
+    const result = await ordersApi.getDriverOrders(session.driverId);
+    allOrders = result.orders || [];
+    if (result.driver && result.driver.availability) {
+      currentAvailability = result.driver.availability;
+      renderAvailability();
+    }
+    renderOrders();
+  } catch (err) {
+    listEl.innerHTML = `<div class="empty-state" style="color:var(--danger);">⚠️ ${err.message}</div>`;
+  }
+}
+
+function renderOrders() {
+  const listEl      = document.getElementById('orderList');
+  const active       = allOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled');
+  const completed     = allOrders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled');
+
+  if (!active.length) {
+    listEl.innerHTML = '<div class="empty-state">No active deliveries assigned right now.</div>';
+  } else {
+    listEl.innerHTML = active.map(orderCardHtml).join('');
+  }
+
+  const toggleEl = document.getElementById('historyToggle');
+  if (completed.length) {
+    toggleEl.style.display = 'block';
+    toggleEl.textContent = `Show ${completed.length} completed today ▾`;
+    document.getElementById('completedList').innerHTML = completed.map(orderCardHtml).join('');
+  } else {
+    toggleEl.style.display = 'none';
+  }
+}
+
+function toggleCompleted() {
+  const el = document.getElementById('completedList');
+  const shown = el.style.display === 'block';
+  el.style.display = shown ? 'none' : 'block';
+  document.getElementById('historyToggle').textContent = shown
+    ? document.getElementById('historyToggle').textContent.replace('▴', '▾')
+    : document.getElementById('historyToggle').textContent.replace('▾', '▴');
+}
+
+function orderCardHtml(o) {
+  const slug = statusSlug(o.status);
+  let actionHtml = '';
+  if (o.status === 'Ready for Pickup') {
+    actionHtml = `<button class="driver-action-btn pickup" onclick="setStatus('${o.orderId}','Picked Up / On the Way',this)">🛵 Accept Pickup</button>`;
+  } else if (o.status === 'Picked Up / On the Way') {
+    actionHtml = `<button class="driver-action-btn deliver" onclick="setStatus('${o.orderId}','Delivered',this)">✅ Mark Delivered</button>`;
+  } else if (o.status === 'Delivered' || o.status === 'Cancelled') {
+    actionHtml = '';
+  } else {
+    actionHtml = `<div class="waiting-note">⏳ Waiting for restaurant to prepare this order</div>`;
+  }
+
+  return `<div class="order-card" id="dcard-${o.orderId}">
+    <div class="order-card-head">
+      <span class="order-id">${o.orderId}</span>
+      <span class="order-ts">${o.timestamp || ''}</span>
+    </div>
+    <div class="order-shop">🏪 ${o.restaurantName || ''}</div>
+    <div class="order-customer">👤 ${o.name || 'Unknown'} · ${o.phone || ''}</div>
+    <div class="order-loc">📍 ${o.location || o.restaurantLocation || ''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+      <span class="status-badge status-${slug}">${o.status}</span>
+      <span class="order-total">₱${o.total}</span>
+    </div>
+    ${actionHtml}
+  </div>`;
+}
+
+// ── Availability toggle ──────────────────────────────────────────────────
+function renderAvailability() {
+  const switchEl = document.getElementById('availSwitch');
+  const textEl   = document.getElementById('availStatusText');
+  if (!switchEl || !textEl) return;
+
+  const isBusy = currentAvailability === 'Currently on Delivery';
+  const isOn   = currentAvailability === 'Available' || isBusy;
+
+  switchEl.classList.toggle('on', isOn);
+  // Busy state is system-managed (set automatically when you accept a
+  // pickup) — drivers can't flip it manually until the delivery is done.
+  switchEl.disabled = isBusy;
+
+  textEl.textContent = currentAvailability;
+  textEl.className = 'avail-status ' + (
+    isBusy ? 'is-busy' : (currentAvailability === 'Available' ? 'is-available' : 'is-unavailable')
+  );
+}
+
+async function toggleAvailability() {
+  if (currentAvailability === 'Currently on Delivery') return; // system-managed, ignore taps
+
+  const switchEl = document.getElementById('availSwitch');
+  const next = currentAvailability === 'Available' ? 'Not Available' : 'Available';
+  const prev = currentAvailability;
+
+  currentAvailability = next; // optimistic update
+  renderAvailability();
+  if (switchEl) switchEl.disabled = true;
+
+  try {
+    await driversApi.setDriverAvailability(session.driverId, next);
+  } catch (err) {
+    currentAvailability = prev; // revert on failure
+    alert('⚠️ ' + (err.message || 'Could not update availability.'));
+  } finally {
+    renderAvailability();
+  }
+}
+
+// ── Update status (restricted to pickup/deliver) ────────────────────────
+async function setStatus(orderId, newStatus, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await ordersApi.updateOrderStatus(orderId, newStatus, { asDriver: true });
+
+    const ord = allOrders.find(o => o.orderId === orderId);
+    if (ord) ord.status = newStatus;
+
+    // The server (DB trigger) auto-manages availability on these two
+    // transitions — mirror that here so the toggle stays in sync without
+    // a refetch.
+    if (newStatus === 'Picked Up / On the Way') currentAvailability = 'Currently on Delivery';
+    else if (newStatus === 'Delivered')          currentAvailability = 'Available';
+    renderAvailability();
+
+    renderOrders();
+  } catch (err) {
+    alert('⚠️ ' + (err.message || 'Could not update status.'));
+    if (btn) { btn.disabled = false; btn.textContent = newStatus === 'Delivered' ? '✅ Mark Delivered' : '🛵 Accept Pickup'; }
+  }
+}
+
+// ── Re-attach functions referenced by inline onclick handlers ────────────
+Object.assign(window, {
+  doLogin, logout, toggleCompleted, toggleAvailability, setStatus,
+});
+</script>
+</body>
+
+</html>

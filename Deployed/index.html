@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nina Picks — Nueva Vizcaya Food</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<meta name="theme-color" content="#7C3AED">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nina Picks">
+<link rel="preconnect" href="https://oqnzjuisiausoguuusaf.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="https://oqnzjuisiausoguuusaf.supabase.co">
+<style>
+/* ── DESIGN TOKENS ───────────────────────────────────────────────────────── */
+:root {
+  --bg:       #0A0A0F;
+  --card:     #161625;
+  --card2:    #1E1E32;
+  --border:   #2A2A45;
+  --primary:  #7C3AED;
+  --accent:   #A78BFA;
+  --txt:      #FFFFFF;
+  --txt2:     #A1A1AA;
+  --success:  #34D399;
+  --warn:     #FBBF24;
+  --danger:   #F87171;
+  --radius:   12px;
+  --radius-lg:18px;
+  --selected-tint: #1A1040;
+  --selected-tint2: #1E1038;
+  --selected-tint3: #14103A;
+  color-scheme: dark;
+}
+/* Follows the OS/browser light-dark preference automatically — this is
+   the same media feature Windows, macOS, iOS, and Android all report,
+   so no separate "mobile" handling is needed. */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:       #F7F6FB;
+    --card:     #FFFFFF;
+    --card2:    #F1EFFA;
+    --border:   #E1DEF0;
+    --primary:  #7C3AED;
+    --accent:   #6D28D9;
+    --txt:      #17171F;
+    --txt2:     #5B5B72;
+    --success:  #059669;
+    --warn:     #D97706;
+    --danger:   #DC2626;
+    /* These three were literal near-black-violet hex values (tuned to sit
+       on a dark card) used for hover/active/selected states on restaurant
+       cards, menu items, and variant/modifier chips. On a white card they'd
+       render as jarring dark splotches, so they get a soft light-violet
+       tint here instead of just inheriting the dark value. */
+    --selected-tint:  #F1EAFE;
+    --selected-tint2: #F1EAFE;
+    --selected-tint3: #EDE4FC;
+    color-scheme: light;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;}
+
+/* ── SCROLLBARS ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ── HEADER ─────────────────────────────────────────────────────────────── */
+header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:14px 18px;position:sticky;top:0;z-index:200;
+  box-shadow:0 4px 24px rgba(124,58,237,0.15);
+}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.track-order-btn{
+  margin-left:auto;padding:7px 13px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt2);font-size:0.76rem;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;
+}
+.track-order-btn:hover{border-color:var(--accent);color:var(--accent);}
+.logo{font-size:1.5rem;font-weight:800;letter-spacing:-0.5px;color:var(--txt);}
+.logo span{color:var(--accent);}
+.tagline{font-size:0.72rem;color:var(--txt2);margin-top:1px;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-group label{font-size:0.62rem;color:var(--txt2);text-transform:uppercase;letter-spacing:0.5px;}
+select,#searchBox{
+  padding:7px 10px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.82rem;cursor:pointer;
+}
+select{
+  min-width:130px;appearance:none;padding-right:28px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%23A1A1AA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+#searchBox{min-width:190px;}
+#searchBox::placeholder{color:var(--txt2);}
+.result-count{font-size:0.7rem;color:var(--txt2);padding-bottom:6px;}
+
+/* ── LAYOUT ─────────────────────────────────────────────────────────────── */
+.app{display:flex;height:calc(100vh - 130px);}
+
+/* ── SIDEBAR ────────────────────────────────────────────────────────────── */
+.sidebar{
+  width:300px;min-width:250px;overflow-y:auto;
+  border-right:1px solid var(--border);background:var(--card);
+  flex-shrink:0;
+}
+.rest-card{
+  padding:11px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background 0.15s;position:relative;
+}
+.rest-card:hover{background:var(--card2);}
+.rest-card.active{background:var(--selected-tint);border-left:3px solid var(--primary);}
+.rest-name{font-weight:600;font-size:0.87rem;line-height:1.3;color:var(--txt);}
+.rest-meta{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;}
+.badge{font-size:0.62rem;padding:2px 7px;border-radius:20px;font-weight:600;text-transform:uppercase;}
+.badge-sol{background:rgba(124,58,237,0.2);color:#C4B5FD;}
+.badge-bay{background:rgba(52,211,153,0.15);color:#6EE7B7;}
+.badge-bam{background:rgba(251,191,36,0.15);color:#FCD34D;}
+.badge-cat{background:rgba(161,161,170,0.12);color:var(--txt2);}
+.rest-hours{font-size:0.67rem;color:var(--txt2);margin-top:3px;}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.status-open{background:var(--success);}
+.status-unknown{background:var(--txt2);}
+.status-closed{background:var(--danger);}
+.rest-code{font-size:0.62rem;color:#52526A;position:absolute;top:9px;right:9px;}
+
+/* ── SKELETON LOADING ───────────────────────────────────────────────────── */
+.skeleton{
+  background:linear-gradient(90deg,var(--card2) 25%,var(--border) 50%,var(--card2) 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-rest{height:70px;margin:2px 0;}
+.skel-card{height:90px;border-radius:10px;}
+
+/* ── ORDER PANEL ────────────────────────────────────────────────────────── */
+.order-panel{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:130px;}
+.panel-placeholder{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;color:var(--txt2);gap:12px;
+}
+.panel-placeholder .icon{font-size:4rem;opacity:0.2;}
+.panel-placeholder p{font-size:0.88rem;}
+
+.restaurant-detail{padding:20px 22px;}
+.detail-header{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.detail-name{font-size:1.3rem;font-weight:700;line-height:1.2;color:var(--txt);}
+.detail-badges{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.detail-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.info-item{font-size:0.75rem;color:var(--txt2);display:flex;align-items:flex-start;gap:5px;}
+.info-item strong{color:var(--txt);}
+.detail-links{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.btn-link{
+  font-size:0.72rem;padding:5px 11px;border-radius:6px;text-decoration:none;
+  border:1px solid var(--border);color:var(--txt2);transition:all 0.15s;
+  display:flex;align-items:center;gap:4px;background:var(--card2);
+}
+.btn-link:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── MENU SECTION (category heading + its own products, stacked) ───────── */
+.menu-section h3 .cat-count{
+  font-size:0.65rem;opacity:0.7;margin-left:4px;font-weight:400;
+  text-transform:none;letter-spacing:0;
+}
+
+/* ── CATEGORY TABS (unused now that categories render stacked, kept in
+   case a future tab/quick-jump nav wants this styling again) ───────────── */
+.category-tabs{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px;
+  border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;
+}
+.category-tabs::-webkit-scrollbar{display:none;}
+.category-tab{
+  flex:0 0 auto;font-size:0.76rem;font-weight:600;padding:7px 13px;
+  border-radius:999px;border:1.5px solid var(--border);background:var(--card2);
+  color:var(--txt2);cursor:pointer;transition:all 0.15s;white-space:nowrap;
+}
+.category-tab:hover{border-color:var(--accent);color:var(--accent);}
+.category-tab.active{
+  background:var(--primary);border-color:var(--primary);color:#fff;
+}
+.category-tab .cat-count{
+  font-size:0.65rem;opacity:0.75;margin-left:3px;
+}
+
+/* ── MENU SECTION ───────────────────────────────────────────────────────── */
+.menu-section{margin-bottom:22px;}
+.menu-section h3{
+  font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--txt2);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.menu-section h3::after{content:'';flex:1;height:1px;background:var(--border);}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+
+.menu-item{
+  border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 13px;
+  cursor:pointer;transition:all 0.18s;position:relative;user-select:none;
+  background:var(--card2);
+}
+.menu-item:hover{border-color:var(--primary);background:var(--selected-tint2);box-shadow:0 4px 20px rgba(124,58,237,0.2);transform:translateY(-2px);}
+.menu-item:active{transform:scale(0.97);}
+.menu-item.unavailable{opacity:0.38;cursor:not-allowed;pointer-events:none;}
+.unavail-tag{font-size:0.65rem;color:var(--danger);font-weight:600;margin-top:4px;}
+
+/* variant pills on menu item */
+.variant-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.variant-pill{
+  font-size:0.62rem;padding:2px 7px;border-radius:10px;
+  background:rgba(124,58,237,0.15);color:var(--accent);border:1px solid rgba(124,58,237,0.3);
+}
+.variant-pill.unavail{opacity:0.4;text-decoration:line-through;}
+
+/* qty badge */
+.qty-badge{
+  position:absolute;top:-7px;right:-7px;
+  background:var(--primary);color:#fff;font-size:0.67rem;font-weight:700;
+  width:20px;height:20px;border-radius:50%;display:none;
+  align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(124,58,237,0.5);
+}
+.qty-badge.show{display:flex;animation:pop 0.2s ease;}
+@keyframes pop{0%{transform:scale(0.4)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes eagleFlap{0%,100%{transform:scaleY(1) scaleX(1)}50%{transform:scaleY(0.75) scaleX(1.15)}}
+
+.item-name{font-size:0.84rem;font-weight:600;padding-right:6px;line-height:1.3;color:var(--txt);}
+.item-cat{font-size:0.66rem;color:var(--txt2);margin-top:2px;}
+.item-price{font-size:0.93rem;font-weight:700;color:var(--success);margin-top:5px;}
+.item-notes{font-size:0.67rem;color:var(--warn);margin-top:2px;font-style:italic;}
+.free-badge{font-size:0.67rem;background:rgba(52,211,153,0.15);color:var(--success);padding:1px 6px;border-radius:10px;}
+.tap-hint{font-size:0.73rem;color:var(--txt2);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.tap-hint span{background:var(--card2);border:1px solid var(--border);padding:3px 8px;border-radius:6px;font-size:0.69rem;}
+
+/* ── CLOSED BANNER ──────────────────────────────────────────────────────── */
+.closed-banner{
+  display:flex;align-items:center;gap:8px;background:rgba(248,113,113,0.1);
+  border:1px solid rgba(248,113,113,0.35);color:var(--danger);
+  padding:10px 14px;border-radius:var(--radius);font-size:0.82rem;font-weight:600;
+  margin-bottom:16px;
+}
+
+/* ── ITEM MODAL ─────────────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  padding:22px 22px 32px;width:100%;max-width:500px;
+  animation:slideUp 0.28s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:4px;color:var(--txt);}
+.modal-cat{font-size:0.72rem;color:var(--txt2);margin-bottom:6px;}
+.modal-notes{font-size:0.77rem;color:var(--warn);margin-bottom:10px;font-style:italic;}
+.modal-price{font-size:1.15rem;font-weight:700;color:var(--success);margin-bottom:16px;}
+
+/* variant selector in modal */
+.modal-variants{margin-bottom:16px;}
+.modal-variants-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);margin-bottom:8px;}
+.variant-option{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);
+  margin-bottom:6px;cursor:pointer;transition:all 0.15s;background:var(--card2);
+}
+.variant-option:hover{border-color:var(--primary);}
+.variant-option.selected{border-color:var(--primary);background:var(--selected-tint);}
+.variant-option.unavail{opacity:0.35;cursor:not-allowed;pointer-events:none;}
+.variant-name{font-size:0.84rem;color:var(--txt);}
+.variant-price{font-size:0.84rem;color:var(--accent);font-weight:600;}
+
+/* modifier section */
+.modal-modifiers{margin-bottom:16px;padding-top:12px;border-top:1px solid var(--border);}
+.modal-modifiers-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);margin-bottom:8px;}
+#modalMods{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.modifier-option{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  padding:8px 10px;border-radius:8px;border:1.5px solid var(--border);
+  cursor:pointer;transition:all 0.15s;background:var(--card2);min-width:0;
+}
+.modifier-option:hover{border-color:var(--accent);}
+.modifier-option.selected{border-color:var(--accent);background:var(--selected-tint3);}
+.modifier-name{font-size:0.78rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.modifier-price{font-size:0.76rem;color:var(--accent);font-weight:600;flex-shrink:0;}
+.modifier-check{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;}
+.modifier-option.selected .modifier-check{background:var(--accent);border-color:var(--accent);}
+.modifier-loading{grid-column:1 / -1;padding:10px 0;color:var(--txt2);font-size:0.8rem;}
+
+.modal-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-qty-label{font-size:0.82rem;color:var(--txt2);}
+.qty-ctrl{display:flex;align-items:center;gap:14px;}
+.qty-btn{
+  width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--card2);color:var(--txt);font-size:1.1rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:background 0.15s;border:1.5px solid var(--border);
+}
+.qty-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
+.qty-val{font-size:1.05rem;font-weight:700;min-width:24px;text-align:center;color:var(--txt);}
+.modal-total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0 16px;border-top:1px solid var(--border);margin-bottom:14px;
+}
+.modal-total-label{font-size:0.82rem;color:var(--txt2);}
+.modal-total-amt{font-size:1.1rem;font-weight:700;color:var(--success);}
+.btn-add{
+  width:100%;padding:14px;border-radius:var(--radius);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  font-size:0.95rem;font-weight:700;letter-spacing:0.3px;transition:all 0.18s;
+  box-shadow:0 4px 20px rgba(124,58,237,0.4);
+}
+.btn-add:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(124,58,237,0.55);}
+.btn-add:active{transform:scale(0.98);}
+
+/* ── FLOATING CART BAR ──────────────────────────────────────────────────── */
+.cart-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  padding:0 0 env(safe-area-inset-bottom);pointer-events:none;
+  transition:transform 0.3s cubic-bezier(.22,.68,0,1.2);transform:translateY(100%);
+}
+.cart-bar.visible{transform:translateY(0);pointer-events:all;}
+.cart-bar-inner{max-width:1200px;margin:0 auto;padding:0 14px 10px;}
+
+.cart-pill{
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  border-radius:var(--radius-lg);padding:11px 16px;
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(124,58,237,0.45);margin-bottom:8px;
+  border:1px solid rgba(167,139,250,0.3);transition:all 0.15s;
+}
+.cart-pill:hover{box-shadow:0 10px 40px rgba(124,58,237,0.6);}
+.cart-pill .pill-count{
+  background:rgba(255,255,255,0.2);color:#fff;font-size:0.71rem;font-weight:700;
+  padding:2px 8px;border-radius:20px;min-width:28px;text-align:center;
+}
+.cart-pill .pill-label{flex:1;font-size:0.85rem;font-weight:600;}
+.cart-pill .pill-total{font-size:0.85rem;font-weight:700;color:#DDD6FE;}
+.cart-pill .pill-arrow{font-size:0.8rem;color:#DDD6FE;transition:transform 0.2s;}
+.cart-bar.expanded .pill-arrow{transform:rotate(180deg);}
+
+.cart-expanded{
+  background:var(--card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  border:1px solid var(--border);border-bottom:none;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.4);max-height:80vh;overflow:hidden;
+  display:none;flex-direction:column;
+}
+.cart-bar.expanded .cart-expanded{display:flex;}
+.cart-bar.expanded .cart-pill{border-radius:0 0 var(--radius) var(--radius);margin-bottom:0;order:2;}
+.cart-bar.expanded .cart-bar-inner{display:flex;flex-direction:column-reverse;gap:0;padding-bottom:8px;}
+
+.cart-panel-head{
+  padding:14px 18px 10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.cart-panel-head h3{font-size:0.9rem;font-weight:700;color:var(--txt);}
+.btn-clear{
+  font-size:0.72rem;padding:4px 10px;border-radius:6px;border:none;cursor:pointer;
+  background:rgba(248,113,113,0.1);color:var(--danger);transition:background 0.15s;
+}
+.btn-clear:hover{background:rgba(248,113,113,0.2);}
+
+.cart-items{overflow-y:auto;flex:1;padding:10px 18px;}
+.cart-row{
+  display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+.cart-row-info{flex:1;}
+.cart-row-name{font-size:0.83rem;font-weight:500;color:var(--txt);}
+.cart-row-variant{font-size:0.7rem;color:var(--accent);margin-top:1px;}
+.cart-row-mods{font-size:0.68rem;color:var(--txt2);margin-top:1px;}
+.cart-row-price{font-size:0.88rem;font-weight:700;color:var(--success);white-space:nowrap;}
+.cart-row-qty{display:flex;align-items:center;gap:7px;}
+.cart-qty-btn{
+  width:24px;height:24px;border-radius:50%;border:1px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.9rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background 0.15s;
+}
+.cart-qty-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
+.cart-qty-num{font-size:0.82rem;font-weight:600;min-width:16px;text-align:center;color:var(--txt);}
+
+.cart-summary{padding:10px 18px 6px;border-top:1px solid var(--border);}
+.summary-row{display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:5px;color:var(--txt2);}
+.summary-row.total{font-size:0.95rem;font-weight:700;color:var(--txt);padding-top:6px;border-top:1px solid var(--border);}
+.summary-row strong{color:var(--success);}
+
+.cart-order-fields{
+  padding:10px 18px 6px;display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.cart-order-fields input,.cart-order-fields select,.cart-order-fields textarea{
+  width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card2);color:var(--txt);font-size:0.82rem;font-family:inherit;
+}
+.cart-order-fields textarea{resize:vertical;min-height:52px;max-height:120px;}
+.cart-order-fields input::placeholder,.cart-order-fields textarea::placeholder{color:var(--txt2);}
+.cart-order-fields input:focus,.cart-order-fields select:focus,.cart-order-fields textarea:focus{
+  outline:none;border-color:var(--accent);
+}
+.cart-order-fields select option{background:var(--card2);}
+.btn-order{
+  margin:8px 18px 6px;padding:13px;border-radius:var(--radius);border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;
+  font-size:0.92rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  gap:8px;box-shadow:0 4px 20px rgba(124,58,237,0.4);transition:all 0.18s;
+}
+.btn-order:hover{box-shadow:0 6px 28px rgba(124,58,237,0.6);}
+.btn-order:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* ── TOAST ──────────────────────────────────────────────────────────────── */
+.toast{
+  position:fixed;top:78px;right:16px;z-index:500;
+  background:var(--card2);border:1px solid var(--border);color:var(--txt);
+  padding:9px 14px;border-radius:10px;font-size:0.79rem;font-weight:500;
+  transform:translateX(120%);transition:transform 0.3s cubic-bezier(.22,.68,0,1.2);
+  pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.toast.show{transform:translateX(0);}
+
+/* ── INSTALL BANNER ─────────────────────────────────────────────────────── */
+.install-banner{
+  display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:var(--card2);border:1px solid var(--primary);border-radius:var(--radius);
+  padding:10px 16px;z-index:350;font-size:0.8rem;color:var(--txt);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);white-space:nowrap;
+  display:flex;align-items:center;gap:10px;
+}
+.install-banner button{
+  background:var(--primary);color:#fff;border:none;border-radius:6px;
+  padding:5px 12px;font-size:0.77rem;font-weight:600;cursor:pointer;
+}
+.install-banner .close-banner{
+  background:none;color:var(--txt2);padding:4px;border:none;cursor:pointer;font-size:1rem;
+}
+
+/* ── LOADING RING ───────────────────────────────────────────────────────── */
+.loading-ring{
+  display:flex;align-items:center;justify-content:center;height:160px;
+  color:var(--txt2);gap:10px;font-size:0.85rem;
+}
+.ring{
+  width:20px;height:20px;border:2.5px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+
+/* ── MOBILE VIEWS ────────────────────────────────────────────────────────── */
+/* Two-view system: #mobileListView and #mobileDetailView switch between each other */
+#mobileListView  { display:none; }
+#mobileDetailView{ display:none; }
+
+.mobile-back-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 16px;background:var(--card);
+  border-bottom:1px solid var(--border);cursor:pointer;
+  font-size:0.85rem;color:var(--accent);font-weight:600;
+  position:sticky;top:0;z-index:10;
+}
+.mobile-back-btn:active{background:var(--card2);}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
+@media(max-width:640px){
+  /* Hide the desktop two-column layout */
+  .sidebar{ display:none !important; }
+  .app{ display:block; height:auto; }
+
+  /* The order-panel itself just becomes a pass-through container */
+  .order-panel{
+    display:block;
+    overflow-y:visible;
+    padding-bottom:0;
+  }
+
+  /* Mobile: full-viewport scrollable views */
+  #mobileListView{
+    display:block;          /* shown by default; JS hides when restaurant picked */
+    min-height:calc(100vh - 130px);
+    overflow-y:auto;
+  }
+  #mobileDetailView{
+    display:none;           /* shown by JS when restaurant picked */
+    min-height:calc(100vh - 130px);
+    padding-bottom:130px;   /* space for cart bar */
+  }
+
+  /* Restaurant cards in the mobile list */
+  .mobile-rest-card{
+    padding:13px 16px;border-bottom:1px solid var(--border);
+    cursor:pointer;transition:background 0.15s;position:relative;
+  }
+  .mobile-rest-card:active{background:var(--card2);}
+  .mobile-rest-card .rest-name{font-size:0.92rem;}
+
+  /* Loading placeholder inside the list view */
+  #mobileListPlaceholder{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:50vh;gap:12px;color:var(--txt2);
+  }
+  #mobileListPlaceholder .icon{font-size:3rem;opacity:0.2;}
+  #mobileListPlaceholder p{font-size:0.88rem;}
+
+  /* Menu grid: 2 columns on mobile */
+  .menu-grid{ grid-template-columns:1fr 1fr; }
+  .cart-order-fields{ grid-template-columns:1fr; }
+  header{ padding:10px 14px; }
+  .filters{ gap:6px; }
+  select,#searchBox{ font-size:0.79rem;min-width:0; }
+
+  /* Desktop placeholder — hide on mobile */
+  #desktopPlaceholder{ display:none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-top">
+    <div>
+      <div class="logo">🦅 Nina<span>Picks</span></div>
+      <div class="tagline">Nueva Vizcaya Food Directory</div>
+    </div>
+    <button class="track-order-btn" onclick="openTrackModal()">📦 Track Order</button>
+  </div>
+  <div class="filters">
+    <div class="filter-group">
+      <label>📍 Area</label>
+      <select id="filterMuni" onchange="applyFilters()">
+        <option value="">All Areas</option>
+        <option value="Solano">Solano</option>
+        <option value="Bayombong">Bayombong</option>
+        <option value="Bambang">Bambang</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🍽️ Category</label>
+      <select id="filterCat" onchange="applyFilters()">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>🔍 Search</label>
+      <input id="searchBox" type="text" placeholder="Restaurant or food…" oninput="debouncedApplyFilters()">
+    </div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div class="app">
+
+  <!-- DESKTOP SIDEBAR (hidden on mobile via CSS) -->
+  <aside class="sidebar" id="sidebar">
+    <div id="sidebarContent">
+      <div class="skeleton skel-rest"></div>
+      <div class="skeleton skel-rest"></div>
+      <div class="skeleton skel-rest"></div>
+      <div class="skeleton skel-rest"></div>
+    </div>
+  </aside>
+
+  <!-- DESKTOP ORDER PANEL (hidden on mobile; mobile uses the views below) -->
+  <main class="order-panel" id="orderPanel">
+    <!-- Desktop placeholder -->
+    <div class="panel-placeholder" id="desktopPlaceholder">
+      <div class="icon">🦅</div>
+      <p>Select a restaurant to view its menu.</p>
+    </div>
+
+    <!-- ── MOBILE VIEW 1: Restaurant List ── -->
+    <div id="mobileListView">
+      <!-- Loading state -->
+      <div id="mobileListPlaceholder">
+        <div class="icon" style="font-size:3rem;opacity:0.2;animation:eagleFlap 0.6s ease-in-out infinite;display:inline-block;transform-origin:center;">🦅</div>
+        <p>Loading restaurants…</p>
+      </div>
+      <!-- Cards injected here by JS -->
+      <div id="mobileRestCards"></div>
+    </div>
+
+    <!-- ── MOBILE VIEW 2: Restaurant Detail ── -->
+    <div id="mobileDetailView">
+      <!-- Sticky back button -->
+      <div class="mobile-back-btn" onclick="mobileGoBack()">← All Restaurants</div>
+      <!-- Loading ring while menu fetches -->
+      <div class="loading-ring" id="mobileMenuLoader" style="display:none;">
+        <div class="ring"></div> Loading menu…
+      </div>
+      <!-- Restaurant detail injected here by JS -->
+      <div id="mobileDetailContent"></div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ITEM MODAL -->
+<div class="modal-overlay" id="itemModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalName"></div>
+    <div class="modal-cat"  id="modalCat"></div>
+    <div class="modal-notes" id="modalNotes"></div>
+
+    <!-- Variant selector -->
+    <div class="modal-variants" id="modalVariantsSection" style="display:none;">
+      <div class="modal-variants-label">Choose option</div>
+      <div id="modalVariants"></div>
+    </div>
+
+    <!-- Modifier selector -->
+    <div class="modal-modifiers" id="modalModsSection" style="display:none;">
+      <div class="modal-modifiers-label">Add-ons</div>
+      <div id="modalMods"></div>
+    </div>
+
+    <div class="modal-price" id="modalPrice"></div>
+
+    <div class="modal-qty-row">
+      <span class="modal-qty-label">Quantity</span>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="modalQtyChange(-1)">−</button>
+        <span class="qty-val" id="modalQty">1</span>
+        <button class="qty-btn" onclick="modalQtyChange(1)">+</button>
+      </div>
+    </div>
+    <div class="modal-total">
+      <span class="modal-total-label">Subtotal</span>
+      <span class="modal-total-amt" id="modalTotal">₱0</span>
+    </div>
+    <button class="btn-add" id="modalAddBtn" onclick="confirmAddToCart()">Add to Order</button>
+  </div>
+</div>
+
+<!-- TRACK ORDER MODAL -->
+<div class="modal-overlay" id="trackModal" onclick="closeTrackModal(event)">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📦 Track Your Order</div>
+    <div class="modal-cat" style="margin-bottom:14px;">Enter your Order ID to check its status</div>
+    <input id="trackOrderId" type="text" placeholder="e.g. ORD-1782888939406"
+           style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.85rem;margin-bottom:12px;"
+           onkeydown="if(event.key==='Enter')checkOrderStatus()">
+    <button class="btn-add" onclick="checkOrderStatus()">Check Status</button>
+    <div id="trackResult" style="margin-top:18px;"></div>
+  </div>
+</div>
+
+<!-- CART BAR -->
+<div class="cart-bar" id="cartBar">
+  <div class="cart-bar-inner">
+    <div class="cart-expanded" id="cartExpanded">
+      <div class="cart-panel-head">
+        <h3>🛒 Your Order</h3>
+        <button class="btn-clear" onclick="clearCart()">Clear all</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-summary" id="cartSummary"></div>
+      <div class="cart-order-fields">
+        <input id="custName"    type="text"  placeholder="Your Name" style="grid-column:1/-1;">
+        <input id="custPhone"   type="tel"   placeholder="Phone Number">
+        <input id="custAddress" type="text"  placeholder="Delivery Address / Landmark / Street">
+        <select id="custLocation" onchange="updateDeliveryFee()" style="grid-column:1/-1;">
+          <option value="">📍 Your Location (delivery fee)</option>
+          <option value="Solano">📍 Solano</option>
+          <option value="Bayombong">📍 Bayombong</option>
+          <option value="Bambang">📍 Bambang</option>
+        </select>
+        <select id="paymentMethod" style="grid-column:1/-1;">
+          <option value="">💳 Payment Method</option>
+          <option value="COD">💵 Cash on Delivery (COD)</option>
+          <option value="GCash">📱 GCash (manual)</option>
+          <option value="Xendit">💳 Pay Online — Card/GCash (Test Mode)</option>
+        </select>
+        <textarea id="orderNotes" rows="2" placeholder="📝 Order notes / special instructions (optional)" style="grid-column:1/-1;"></textarea>
+      </div>
+      <button class="btn-order" id="orderBtn" onclick="createOrder()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Create Order
+      </button>
+    </div>
+    <div class="cart-pill" id="cartPill" onclick="toggleCart()">
+      <span class="pill-count" id="pillCount">0</span>
+      <span class="pill-label" id="pillLabel">Your order</span>
+      <span class="pill-total" id="pillTotal">₱0</span>
+      <span class="pill-arrow">▲</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════════════════════════
+//  NINA PICKS V2 — INDEX.HTML (Supabase)
+//  Migrated from Apps Script. Function names/DOM ids unchanged; only the
+//  internals moved from fetch(API_URL, {action:...}) to Supabase, matching
+//  the same migration pattern already used in admin.html / driver.html /
+//  dashboard.html.
+// ══════════════════════════════════════════════════════════════════════════
+
+import * as restaurantsApi from './api/restaurants.js';
+import * as productsApi from './api/products.js';
+import * as ordersApi from './api/orders.js';
+import * as paymentsApi from './api/payments.js';
+
+// ── State ─────────────────────────────────────────────────────────────────
+let allRestaurants  = [];
+let filteredRests   = [];
+let activeId        = null;
+let activeRest      = null;
+let activeMenu      = null;
+// Category-tab state (see loadMenu/loadCategoryItems/selectCategory below).
+// activeMenu.products grows as categories are fetched but is NEVER
+// reordered or spliced — cart entries reference items by array index
+// (_prodIdx) and DOM ids (mi-N / qbadge-N) depend on that index staying
+// stable for the lifetime of the open restaurant.
+let activeCategories  = [];        // [{id, name, itemCount}] for the open restaurant
+let activeCategoryId  = null;      // which tab is currently selected
+let loadedCategoryIds = new Set(); // category ids already fetched this session
+let cart            = [];
+let cartExpanded    = false;
+let modalProduct    = null;
+let modalVariantIdx = 0;
+let modalSelectedMods = new Set();
+let modalQtyVal     = 1;
+
+const DELIVERY = {
+  Solano:    { Solano: 35,  Bayombong: 80,  Bambang: 80  },
+  Bayombong: { Solano: 80,  Bayombong: 35,  Bambang: 80  },
+  Bambang:   { Solano: 80,  Bayombong: 80,  Bambang: 35  },
+};
+
+// ── PWA ───────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(() => {});
+}
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+
+// ── Startup ───────────────────────────────────────────────────────────────
+(async function init() {
+  loadCartFromStorage();
+  await loadRestaurants();
+  applyFilters();
+  updateCartBar();
+  checkPaymentReturn(); // no-op unless the URL has ?payment=return&order=...
+})();
+
+// ── Load Restaurants ──────────────────────────────────────────────────────
+const RESTAURANT_CACHE_KEY = 'np_restaurants_cache_v1';
+const RESTAURANT_CACHE_TTL = 10 * 60 * 1000; // 10 min — matches server-side CACHE_TTL
+
+async function loadRestaurants() {
+  // ── Stale-while-revalidate: paint instantly from localStorage if we
+  //    have anything, then quietly refresh from the network. This is what
+  //    actually fixes the "slow to load" feeling — Apps Script round trips
+  //    can take a couple seconds, so waiting on the network before showing
+  //    anything is the biggest cost on every open of the app. ──────────
+  let hadCache = false;
+  try {
+    const cached = JSON.parse(localStorage.getItem(RESTAURANT_CACHE_KEY) || 'null');
+    if (cached && Array.isArray(cached.restaurants) && cached.restaurants.length) {
+      allRestaurants = cached.restaurants;
+      hadCache = true;
+      buildCategoryFilter();
+      applyFilters();
+      const age = Date.now() - (cached.ts || 0);
+      if (age < RESTAURANT_CACHE_TTL) return; // fresh enough — skip the network round trip entirely
+    }
+  } catch (_) { /* corrupt cache, ignore and fall through to network */ }
+
+  try {
+    allRestaurants = await restaurantsApi.getRestaurants() || [];
+    try {
+      localStorage.setItem(RESTAURANT_CACHE_KEY, JSON.stringify({ ts: Date.now(), restaurants: allRestaurants }));
+    } catch (_) { /* storage full/unavailable — non-fatal */ }
+  } catch (err) {
+    console.error('loadRestaurants failed:', err);
+    if (hadCache) return; // we already have (stale) data on screen — don't blow it away on a failed refresh
+    document.getElementById('mobileRestCards').innerHTML =
+      '<div style="padding:24px;color:#F87171;text-align:center;">⚠️ Could not load restaurants.<br>Check your internet and try again.</div>';
+    document.getElementById('mobileListPlaceholder').style.display = 'none';
+    document.getElementById('orderPanel').innerHTML =
+      '<div class="panel-placeholder"><div class="icon">⚠️</div><p style="color:#F87171;">Could not load restaurants.</p></div>';
+    return;
+  }
+
+  buildCategoryFilter();
+}
+
+function buildCategoryFilter() {
+  const catSel = document.getElementById('filterCat');
+  if (!catSel) return;
+  // Re-derive from scratch each call (cheap) so a background refresh with
+  // new categories doesn't leave stale <option> duplicates behind.
+  const selected = catSel.value;
+  catSel.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+  const cats = [...new Set(allRestaurants.map(r => r.category).filter(Boolean))].sort();
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c; catSel.appendChild(o);
+  });
+  if (cats.includes(selected)) catSel.value = selected;
+}
+
+// ── Mobile helpers ────────────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 640; }
+
+function showMobileListView() {
+  const lv = document.getElementById('mobileListView');
+  const dv = document.getElementById('mobileDetailView');
+  if (lv) lv.style.display = 'block';
+  if (dv) dv.style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+function showMobileDetailView() {
+  const lv = document.getElementById('mobileListView');
+  const dv = document.getElementById('mobileDetailView');
+  if (lv) lv.style.display = 'none';
+  if (dv) dv.style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function mobileGoBack() {
+  activeId   = null;
+  activeRest = null;
+  activeMenu = null;
+  activeCategories  = [];
+  activeCategoryId  = null;
+  loadedCategoryIds = new Set();
+  cart = [];
+  saveCartToStorage();
+  updateCartBar();
+  renderSidebar();
+  showMobileListView();
+}
+
+// ── Filter & Render ───────────────────────────────────────────────────────
+function applyFilters() {
+  const muni   = document.getElementById('filterMuni').value;
+  const cat    = document.getElementById('filterCat').value;
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+
+  filteredRests = allRestaurants.filter(r => {
+    if (muni   && r.municipality !== muni)   return false;
+    if (cat    && r.category     !== cat)    return false;
+    if (search && !r.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent =
+    filteredRests.length + ' restaurant' + (filteredRests.length !== 1 ? 's' : '');
+
+  renderSidebar();
+
+  // On mobile list view, scroll to top so new results are visible
+  if (isMobile() && !activeId) window.scrollTo(0, 0);
+}
+
+// Typing in the search box fires oninput on every keystroke — without this,
+// each keystroke rebuilds and re-paints the whole restaurant list. 120ms is
+// short enough to feel instant but skips the redundant renders mid-typing.
+let _filterDebounceTimer = null;
+function debouncedApplyFilters() {
+  clearTimeout(_filterDebounceTimer);
+  _filterDebounceTimer = setTimeout(applyFilters, 120);
+}
+
+function muniClass(m) {
+  if (m === 'Solano')    return 'badge-sol';
+  if (m === 'Bayombong') return 'badge-bay';
+  if (m === 'Bambang')   return 'badge-bam';
+  return 'badge-cat';
+}
+
+function buildCardHtml(r, cls) {
+  const dot    = r.status === 'Open' ? 'status-open' : r.status === 'Closed' ? 'status-closed' : 'status-unknown';
+  const active = r.id === activeId ? ' active' : '';
+  return `<div class="${cls}${active}" onclick="selectRestaurant('${r.id}')">
+    <span class="rest-code">${r.id}</span>
+    <div class="rest-name">${r.name}</div>
+    <div class="rest-meta">
+      <span class="status-dot ${dot}"></span>
+      <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
+      <span class="badge badge-cat">${r.category}</span>
+    </div>
+    ${r.hours ? `<div class="rest-hours">🕐 ${r.hours}</div>` : ''}
+  </div>`;
+}
+
+function renderSidebar() {
+  // Desktop sidebar
+  const sideHtml = filteredRests.map(r => buildCardHtml(r, 'rest-card')).join('');
+  document.getElementById('sidebarContent').innerHTML =
+    sideHtml || '<div style="padding:20px;color:var(--txt2);font-size:0.84rem;">No restaurants found.</div>';
+
+  // Mobile list cards (always updated so search works in portrait)
+  const mobileHtml = filteredRests.map(r => buildCardHtml(r, 'mobile-rest-card rest-card')).join('');
+  const cardsEl = document.getElementById('mobileRestCards');
+  if (cardsEl) {
+    cardsEl.innerHTML = mobileHtml ||
+      '<div style="padding:20px;color:var(--txt2);font-size:0.84rem;">No restaurants found.</div>';
+  }
+  // Hide spinner once we have data
+  const ph = document.getElementById('mobileListPlaceholder');
+  if (ph && allRestaurants.length > 0) ph.style.display = 'none';
+}
+
+// ── Select Restaurant ──────────────────────────────────────────────────────
+async function selectRestaurant(id) {
+  if (activeId && activeId !== id) { cart = []; saveCartToStorage(); }
+  activeId   = id;
+  activeRest = allRestaurants.find(r => r.id === id);
+  activeMenu = { products: [] };
+  activeCategories  = [];
+  activeCategoryId  = null;
+  loadedCategoryIds = new Set();
+
+  renderSidebar();
+  updateCartBar();
+
+  // If we have cached categories (and ideally the first tab's items),
+  // paint immediately — no spinner, no wait. loadMenu() below still
+  // refreshes everything from the network right after.
+  const cachedCats = readCachedCategories(id);
+  if (cachedCats && cachedCats.length) {
+    activeCategories = cachedCats;
+    activeCategoryId = cachedCats[0].id;
+    const cachedItems = readCachedCategoryItems(id, activeCategoryId);
+    if (cachedItems) applyCategoryItems(activeCategoryId, cachedItems);
+    if (isMobile()) showMobileDetailView();
+    renderDetail();
+    restoreCartBadges();
+  } else if (isMobile()) {
+    // Switch to detail view, show loader, clear previous content
+    showMobileDetailView();
+    const loader  = document.getElementById('mobileMenuLoader');
+    const content = document.getElementById('mobileDetailContent');
+    if (loader)  loader.style.display  = 'flex';
+    if (content) content.innerHTML = '';
+  } else {
+    // Desktop: replace order panel content
+    document.getElementById('orderPanel').innerHTML =
+      '<div class="loading-ring"><div class="ring"></div> Loading menu…</div>';
+  }
+
+  await loadMenu(id);
+  if (activeId !== id) return; // user navigated elsewhere while this was in flight
+  renderDetail();
+  restoreCartBadges();
+}
+
+// ── Load Menu ──────────────────────────────────────────────────────────────
+// v3: uses getCategories + getMenuByCategory instead of getMenuList. A
+// restaurant's menu is no longer fetched as one blob — we fetch the
+// (tiny) category list first, render it as tabs, eagerly load only the
+// first tab's items, and load any other tab's items on demand when the
+// customer actually clicks it. For a 10-category/100-item menu this turns
+// "download everything" into "download ~10 items," matching what a
+// customer actually looks at on a typical visit. Modifiers stay lazy per-
+// item exactly as before (see ensureModifiersLoaded below) — this is on
+// top of that, not a replacement for it.
+const CATEGORIES_CACHE_PREFIX = 'np_categories_cache_v1_';
+const CATEGORY_ITEMS_CACHE_PREFIX = 'np_catitems_cache_v1_';
+const MENU_CACHE_TTL = 3 * 60 * 1000; // 3 min — shorter than restaurants since price/availability change more
+
+// In-memory per-productId modifier cache for the currently loaded menu, so
+// re-opening an item you've already opened never re-fetches. Persisted to
+// localStorage too, so it survives closing/reopening the app.
+const MODS_CACHE_PREFIX = 'np_mods_cache_v1_';
+const MODS_CACHE_TTL = 10 * 60 * 1000; // matches server CACHE_TTL
+
+function readCachedCategories(restId) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATEGORIES_CACHE_PREFIX + restId) || 'null');
+    return (cached && cached.categories) ? cached.categories : null;
+  } catch (_) { return null; }
+}
+
+function readCachedCategoryItems(restId, categoryId) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATEGORY_ITEMS_CACHE_PREFIX + restId + '_' + categoryId) || 'null');
+    return (cached && cached.products) ? cached.products : null;
+  } catch (_) { return null; }
+}
+
+function categoryItemsFresh(restId, categoryId) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATEGORY_ITEMS_CACHE_PREFIX + restId + '_' + categoryId) || 'null');
+    return !!(cached && Date.now() - (cached.ts || 0) < MENU_CACHE_TTL);
+  } catch (_) { return false; }
+}
+
+// Merge fetched (or cached) items for one category into the ever-growing
+// activeMenu.products array. Existing items are updated IN PLACE (matched
+// by productId) rather than removed/re-pushed, so their array index never
+// changes — that index is baked into cart entries (_prodIdx) and DOM ids
+// (mi-N / qbadge-N) for as long as this restaurant stays open.
+function applyCategoryItems(categoryId, products) {
+  const existingByPid = {};
+  activeMenu.products.forEach((p, i) => { if (p._category === categoryId) existingByPid[p.productId] = i; });
+
+  products.forEach(p => {
+    p._category = categoryId;
+    const idx = existingByPid[p.productId];
+    if (idx !== undefined) Object.assign(activeMenu.products[idx], p);
+    else activeMenu.products.push(p);
+  });
+  loadedCategoryIds.add(categoryId);
+}
+
+async function loadCategoryItems(restId, categoryId) {
+  if (!categoryId) return;
+
+  const cached = readCachedCategoryItems(restId, categoryId);
+  if (cached) {
+    applyCategoryItems(categoryId, cached);
+    if (categoryItemsFresh(restId, categoryId)) return; // fresh enough, skip network
+  }
+
+  try {
+    const products = await productsApi.getMenuByCategory(restId, categoryId) || [];
+    applyCategoryItems(categoryId, products);
+    try {
+      localStorage.setItem(CATEGORY_ITEMS_CACHE_PREFIX + restId + '_' + categoryId,
+        JSON.stringify({ ts: Date.now(), products }));
+    } catch (_) {}
+  } catch (err) {
+    console.error('loadCategoryItems failed:', err);
+    // If we had cache we already applied it above, so the tab still shows
+    // something; otherwise loadedCategoryIds stays unset and renderDetail
+    // will show a retry-friendly empty state rather than pretending it's
+    // an empty category.
+  }
+}
+
+// Called on restaurant open: fetch the category list, then load every
+// category's items in parallel. The menu now renders as one vertically
+// stacked list (category heading + its products, category heading + its
+// products, ...) instead of a tab-switcher showing one category at a
+// time, so every category's items are needed up front rather than lazily
+// on tab-click.
+async function loadMenu(restId) {
+  try {
+    activeCategories = await productsApi.getCategories(restId) || [];
+    try { localStorage.setItem(CATEGORIES_CACHE_PREFIX + restId, JSON.stringify({ ts: Date.now(), categories: activeCategories })); } catch (_) {}
+  } catch (err) {
+    console.error('getCategories failed:', err);
+    // keep whatever activeCategories we already had (e.g. from cache)
+  }
+
+  if (!activeCategoryId || !activeCategories.some(c => c.id === activeCategoryId)) {
+    activeCategoryId = activeCategories[0] ? activeCategories[0].id : null;
+  }
+
+  await Promise.all(activeCategories.map(c => loadCategoryItems(restId, c.id)));
+}
+
+// Called when a category tab is clicked.
+async function selectCategory(categoryId) {
+  if (!activeRest || categoryId === activeCategoryId) return;
+  activeCategoryId = categoryId;
+  renderDetail();       // repaint tabs immediately + show a loading state for this tab
+  restoreCartBadges();
+
+  if (!loadedCategoryIds.has(categoryId)) {
+    await loadCategoryItems(activeRest.id, categoryId);
+    if (activeCategoryId !== categoryId) return; // user tapped another tab meanwhile
+    renderDetail();
+    restoreCartBadges();
+  }
+}
+
+// Fetches and merges modifiers for one product's variants, if any variant
+// needs them and we haven't already got them. Safe to call every time an
+// item modal opens — it's a cheap no-op once modifiers are loaded.
+// Returns true if it actually kicked off a network fetch (so the caller
+// can show a brief loading state), false if nothing was needed.
+function ensureModifiersLoaded(prod) {
+  if (!prod || !prod.variants || !prod.variants.length) return null;
+  const needsFetch = prod.variants.some(v => v.hasModifiers && !v._modsLoaded);
+  if (!needsFetch) return null;
+
+  const modsCacheKey = MODS_CACHE_PREFIX + prod.productId;
+  const applyModifiers = (variantModifiers) => {
+    prod.variants.forEach(v => {
+      v.modifiers   = variantModifiers[v.variantId] || v.modifiers || [];
+      v._modsLoaded = true;
+    });
+  };
+
+  // localStorage cache first
+  try {
+    const cached = JSON.parse(localStorage.getItem(modsCacheKey) || 'null');
+    if (cached && cached.variantModifiers && Date.now() - (cached.ts || 0) < MODS_CACHE_TTL) {
+      applyModifiers(cached.variantModifiers);
+      return null; // fully served from cache, no network needed
+    }
+  } catch (_) { /* ignore corrupt cache */ }
+
+  return productsApi.getItemModifiers(prod.productId).then(variantModifiers => {
+    applyModifiers(variantModifiers || {});
+    try { localStorage.setItem(modsCacheKey, JSON.stringify({ ts: Date.now(), variantModifiers })); } catch (_) {}
+  }).catch(err => {
+    console.error('ensureModifiersLoaded failed:', err);
+    // Mark as loaded anyway so we don't hammer the API on every click;
+    // the item just displays with no modifiers this session.
+    prod.variants.forEach(v => { v._modsLoaded = true; });
+  });
+}
+
+// ── Render Restaurant Detail ───────────────────────────────────────────────
+function renderDetail() {
+  if (!activeRest) return;
+  const r = activeRest;
+
+  const statusColor = r.status === 'Open' ? 'var(--success)' : r.status === 'Closed' ? 'var(--danger)' : 'var(--txt2)';
+  const linksHtml = [
+    r.maps     ? `<a href="${r.maps}" target="_blank" class="btn-link">🗺️ Maps</a>` : '',
+    r.phone    ? `<a href="tel:${r.phone}" class="btn-link">📞 ${r.phone}</a>` : '',
+    r.facebook ? `<a href="${r.facebook}" target="_blank" class="btn-link">📘 Facebook</a>` : '',
+  ].join('');
+
+  const isClosed = r.status === 'Closed';
+
+  // Renders one product card — used for every category's items below.
+  const renderMenuItem = (prod) => {
+    const gi = activeMenu.products.indexOf(prod);
+    const isUnavail = prod.available === false || isClosed;
+    let priceDisplay = '', pillsSection = '';
+
+    if (prod.variants && prod.variants.length) {
+      const prices = prod.variants.filter(v => v.available !== false).map(v => prod.basePrice + v.priceAdjustment);
+      if (prices.length) {
+        const mn = Math.min(...prices), mx = Math.max(...prices);
+        priceDisplay = mn === mx ? `₱${mn}` : `₱${mn}–${mx}`;
+      }
+      pillsSection = `<div class="variant-pills">${prod.variants.map(v =>
+        `<span class="variant-pill${v.available === false ? ' unavail' : ''}">${v.variantName}</span>`
+      ).join('')}</div>`;
+    } else {
+      priceDisplay = prod.basePrice === 0 ? '' : `₱${prod.basePrice}`;
+    }
+
+    return `<div class="menu-item${isUnavail ? ' unavailable' : ''}" id="mi-${gi}" onclick="${isUnavail ? '' : `openItemModal(${gi})`}" title="${isClosed ? 'This restaurant is currently closed' : ''}">
+      <span class="qty-badge" id="qbadge-${gi}"></span>
+      <div class="item-name">${prod.name}</div>
+      ${prod.description ? `<div class="item-notes">★ ${prod.description}</div>` : ''}
+      <div class="item-price">${prod.basePrice === 0 && !(prod.variants && prod.variants.length) ? '<span class="free-badge">Included / Free</span>' : priceDisplay}</div>
+      ${pillsSection}
+      ${isUnavail ? `<div class="unavail-tag">🚫 ${isClosed ? 'Shop closed' : 'Not available'}</div>` : ''}
+    </div>`;
+  };
+
+  // Categories stack top to bottom — each heading is immediately followed
+  // by only that category's own products, never side by side.
+  let menuHtml = '';
+  if (!activeCategories || !activeCategories.length) {
+    menuHtml = `<div style="color:var(--txt2);font-size:0.85rem;padding:20px 0;">No menu data available yet.</div>`;
+  } else {
+    menuHtml = activeCategories.map(c => {
+      let sectionHtml;
+      if (!loadedCategoryIds.has(c.id)) {
+        sectionHtml = `<div class="loading-ring"><div class="ring"></div> Loading items…</div>`;
+      } else {
+        const itemsForCat = activeMenu.products.filter(p => p._category === c.id);
+        sectionHtml = itemsForCat.length
+          ? `<div class="menu-grid">${itemsForCat.map(renderMenuItem).join('')}</div>`
+          : `<div style="color:var(--txt2);font-size:0.85rem;padding:0 0 16px;">No items in this category.</div>`;
+      }
+      return `<div class="menu-section"><h3>${c.name}<span class="cat-count">${c.itemCount}</span></h3>${sectionHtml}</div>`;
+    }).join('');
+  }
+
+  const detailHtml = `<div class="restaurant-detail">
+    <div class="detail-header">
+      <div class="detail-name">${r.name}</div>
+      <div class="detail-badges">
+        <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
+        <span class="badge badge-cat">${r.category}</span>
+        <span style="font-size:0.72rem;color:${statusColor};font-weight:600;">● ${r.status || 'Unknown'}</span>
+        <span style="font-size:0.68rem;color:#52526A;">${r.id}</span>
+      </div>
+      <div class="detail-info">
+        ${r.address  ? `<div class="info-item">📍 <span>${r.address}${r.barangay ? ' · ' + r.barangay : ''}</span></div>` : ''}
+        ${r.hours    ? `<div class="info-item">🕐 <span>${r.hours}</span></div>` : ''}
+        ${r.delivery === 'Yes' ? `<div class="info-item">🛵 <strong>Delivery Available</strong></div>` : ''}
+      </div>
+      ${linksHtml ? `<div class="detail-links">${linksHtml}</div>` : ''}
+    </div>
+    ${isClosed
+      ? `<div class="closed-banner">🚫 This restaurant is currently closed. Ordering is disabled until it reopens.</div>`
+      : `<div class="tap-hint">Tap an item to add to order <span>Tap again to adjust</span></div>`}
+    ${menuHtml}
+  </div>`;
+
+  if (isMobile()) {
+    // Inject into mobile detail view, hide loader
+    const loader  = document.getElementById('mobileMenuLoader');
+    const content = document.getElementById('mobileDetailContent');
+    if (loader)  loader.style.display = 'none';
+    if (content) content.innerHTML = detailHtml;
+  } else {
+    // Desktop: replace order panel
+    document.getElementById('orderPanel').innerHTML = detailHtml;
+  }
+}
+
+// ── Item Modal ─────────────────────────────────────────────────────────────
+function openItemModal(productIdx) {
+  if (!activeMenu) return;
+  if (activeRest && activeRest.status === 'Closed') { showToast('This restaurant is currently closed'); return; }
+  const prod = activeMenu.products[productIdx];
+  if (!prod || prod.available === false) return;
+
+  modalProduct      = prod;
+  modalVariantIdx   = 0;
+  modalSelectedMods = new Set();
+  modalQtyVal       = 1;
+
+  if (prod.variants && prod.variants.length) {
+    for (let i = 0; i < prod.variants.length; i++) {
+      if (prod.variants[i].available !== false) { modalVariantIdx = i; break; }
+    }
+  }
+
+  document.getElementById('modalName').textContent  = prod.name;
+  document.getElementById('modalCat').textContent   = prod.category || '';
+  document.getElementById('modalNotes').textContent = prod.description || '';
+  document.getElementById('modalNotes').style.display = prod.description ? 'block' : 'none';
+  document.getElementById('modalQty').textContent   = 1;
+
+  const varSec = document.getElementById('modalVariantsSection');
+  const varDiv = document.getElementById('modalVariants');
+  if (prod.variants && prod.variants.length) {
+    varDiv.innerHTML = prod.variants.map((v, vi) => {
+      const unavail    = v.available === false;
+      const finalPrice = prod.basePrice + v.priceAdjustment;
+      const adj        = v.priceAdjustment > 0 ? `+₱${v.priceAdjustment}` : v.priceAdjustment < 0 ? `-₱${Math.abs(v.priceAdjustment)}` : `₱${finalPrice}`;
+      return `<div class="variant-option${vi === modalVariantIdx ? ' selected' : ''}${unavail ? ' unavail' : ''}" onclick="selectVariant(${vi})">
+        <span class="variant-name">${v.variantName}</span>
+        <span class="variant-price">${adj}</span>
+      </div>`;
+    }).join('');
+    varSec.style.display = 'block';
+  } else {
+    varSec.style.display = 'none';
+  }
+
+  renderModalModifiers();
+  updateModalPrice();
+  document.getElementById('itemModal').classList.add('open');
+
+  // Fetch this item's modifiers on demand (cheap no-op if already cached
+  // or if this item has no modifiers at all). Re-render once they land,
+  // but only if the customer hasn't already moved on to another item.
+  const pending = ensureModifiersLoaded(prod);
+  if (pending) {
+    pending.then(() => { if (modalProduct === prod) { renderModalModifiers(); updateModalPrice(); } });
+  }
+}
+
+function selectVariant(vi) {
+  modalVariantIdx   = vi;
+  modalSelectedMods = new Set();
+  document.querySelectorAll('.variant-option').forEach((el, i) => el.classList.toggle('selected', i === vi));
+  renderModalModifiers();
+  updateModalPrice();
+}
+
+function renderModalModifiers() {
+  const modSec = document.getElementById('modalModsSection');
+  const modDiv = document.getElementById('modalMods');
+  const prod   = modalProduct;
+  if (!prod) return;
+  const variant = (prod.variants && prod.variants.length) ? prod.variants[modalVariantIdx] : null;
+  if (variant && variant.hasModifiers && !variant._modsLoaded) {
+    // Still in flight — show a lightweight placeholder instead of nothing,
+    // so the modal doesn't look broken while the on-demand fetch resolves.
+    modSec.style.display = 'block';
+    modDiv.innerHTML = '<div class="modifier-loading">Loading options…</div>';
+    return;
+  }
+  const mods    = variant ? (variant.modifiers || []) : [];
+  if (!mods.length) { modSec.style.display = 'none'; return; }
+  modSec.style.display = 'block';
+  modDiv.innerHTML = mods.map(m => {
+    const selected = modalSelectedMods.has(m.modifierId);
+    const adjStr   = m.priceAdjustment > 0 ? `+₱${m.priceAdjustment}` : m.priceAdjustment < 0 ? `-₱${Math.abs(m.priceAdjustment)}` : 'Free';
+    return `<div class="modifier-option${selected ? ' selected' : ''}" onclick="toggleMod('${m.modifierId}')" title="${m.name}">
+      <div style="min-width:0;">
+        <div class="modifier-name">${m.name}</div>
+        <div style="font-size:0.65rem;color:var(--txt2);">${m.type === 'remove' ? 'Remove · ' : ''}${adjStr}</div>
+      </div>
+      <div class="modifier-check"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMod(modId) {
+  if (modalSelectedMods.has(modId)) modalSelectedMods.delete(modId);
+  else modalSelectedMods.add(modId);
+  renderModalModifiers();
+  updateModalPrice();
+}
+
+function updateModalPrice() {
+  const prod = modalProduct;
+  if (!prod) return;
+  const variant     = (prod.variants && prod.variants.length) ? prod.variants[modalVariantIdx] : null;
+  const variant_adj = variant ? variant.priceAdjustment : 0;
+  const mods        = variant ? (variant.modifiers || []) : [];
+  let modAdj = 0;
+  mods.forEach(m => { if (modalSelectedMods.has(m.modifierId)) modAdj += m.priceAdjustment; });
+  const unitPrice = prod.basePrice + variant_adj + modAdj;
+  document.getElementById('modalPrice').textContent = `₱${unitPrice}`;
+  document.getElementById('modalTotal').textContent = `₱${unitPrice * modalQtyVal}`;
+  document.getElementById('modalAddBtn').textContent = 'Add to Order';
+}
+
+function modalQtyChange(delta) {
+  modalQtyVal = Math.max(1, modalQtyVal + delta);
+  document.getElementById('modalQty').textContent = modalQtyVal;
+  updateModalPrice();
+}
+
+function confirmAddToCart() {
+  const prod    = modalProduct;
+  if (!prod) return;
+  const variant = (prod.variants && prod.variants.length) ? prod.variants[modalVariantIdx] : null;
+  const varAdj  = variant ? variant.priceAdjustment : 0;
+  const allMods = variant ? (variant.modifiers || []) : [];
+  const selectedMods = allMods.filter(m => modalSelectedMods.has(m.modifierId));
+  const modAdj  = selectedMods.reduce((s, m) => s + m.priceAdjustment, 0);
+  const unitPrice = prod.basePrice + varAdj + modAdj;
+  const modKey  = [...modalSelectedMods].sort().join(',');
+  const cartKey = `${prod.productId}:${variant ? variant.variantId : ''}:${modKey}`;
+  const prodIdx = activeMenu.products.indexOf(prod);
+  const existing = cart.find(c => c._key === cartKey);
+  if (existing) {
+    existing.qty = modalQtyVal;
+  } else {
+    cart.push({
+      _key: cartKey, _prodIdx: prodIdx,
+      productId: prod.productId, name: prod.name,
+      variantId: variant ? variant.variantId : '',
+      variantName: variant ? variant.variantName : '',
+      mods: selectedMods.map(m => ({ id: m.modifierId, name: m.name, adj: m.priceAdjustment })),
+      price: unitPrice, qty: modalQtyVal,
+    });
+  }
+  updateCartBadge(prodIdx);
+  updateCartBar();
+  saveCartToStorage();
+  document.getElementById('itemModal').classList.remove('open');
+  modalProduct = null;
+  showToast(`${prod.name} ${existing ? 'updated' : 'added'} ✓`);
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('itemModal')) {
+    document.getElementById('itemModal').classList.remove('open');
+    modalProduct = null;
+  }
+}
+
+// ── Cart Badge ────────────────────────────────────────────────────────────
+function updateCartBadge(prodIdx) {
+  const badge = document.getElementById(`qbadge-${prodIdx}`);
+  if (!badge) return;
+  const total = cart.filter(c => c._prodIdx === prodIdx).reduce((s, c) => s + c.qty, 0);
+  badge.textContent = total;
+  badge.classList.toggle('show', total > 0);
+}
+
+function restoreCartBadges() {
+  if (!activeMenu) return;
+  activeMenu.products.forEach((_, i) => updateCartBadge(i));
+}
+
+// ── Cart Bar ──────────────────────────────────────────────────────────────
+function toggleCart() {
+  cartExpanded = !cartExpanded;
+  const bar = document.getElementById('cartBar');
+  bar.classList.toggle('expanded', cartExpanded);
+  if (cartExpanded) renderCartItems();
+}
+
+function renderCartItems() {
+  const container = document.getElementById('cartItems');
+  if (!cart.length) {
+    container.innerHTML = '<div style="padding:16px;color:var(--txt2);font-size:0.84rem;">Your cart is empty.</div>';
+    return;
+  }
+  container.innerHTML = cart.map((c, ci) => {
+    const modsText = c.mods && c.mods.length ? c.mods.map(m => m.name).join(', ') : '';
+    return `<div class="cart-row">
+      <div class="cart-row-info">
+        <div class="cart-row-name">${c.name}</div>
+        ${c.variantName ? `<div class="cart-row-variant">${c.variantName}</div>` : ''}
+        ${modsText ? `<div class="cart-row-mods">${modsText}</div>` : ''}
+      </div>
+      <div class="cart-row-qty">
+        <button class="cart-qty-btn" onclick="adjustCartQty(${ci}, -1)">−</button>
+        <span class="cart-qty-num">${c.qty}</span>
+        <button class="cart-qty-btn" onclick="adjustCartQty(${ci}, 1)">+</button>
+      </div>
+      <div class="cart-row-price">₱${c.price * c.qty}</div>
+    </div>`;
+  }).join('');
+  renderCartSummary();
+}
+
+function adjustCartQty(ci, delta) {
+  cart[ci].qty = Math.max(0, cart[ci].qty + delta);
+  if (cart[ci].qty === 0) {
+    const idx = cart[ci]._prodIdx;
+    cart.splice(ci, 1);
+    updateCartBadge(idx);
+  }
+  updateCartBar();
+  saveCartToStorage();
+  renderCartItems();
+}
+
+function clearCart() {
+  const idxs = [...new Set(cart.map(c => c._prodIdx))];
+  cart = [];
+  idxs.forEach(updateCartBadge);
+  updateCartBar();
+  saveCartToStorage();
+  cartExpanded = false;
+  document.getElementById('cartBar').classList.remove('expanded');
+}
+
+function renderCartSummary() {
+  const food  = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const fee   = getDeliveryFee();
+  const total = food + fee;
+  document.getElementById('cartSummary').innerHTML = `
+    <div class="summary-row"><span>Food total</span><strong>₱${food}</strong></div>
+    ${fee > 0 ? `<div class="summary-row"><span>Delivery fee</span><strong>₱${fee}</strong></div>` : ''}
+    <div class="summary-row total"><span>Grand Total</span><strong>₱${total}</strong></div>`;
+}
+
+function updateDeliveryFee() { if (cartExpanded) renderCartSummary(); }
+
+function getDeliveryFee() {
+  const shopMuni = activeRest ? activeRest.municipality : null;
+  const custMuni = document.getElementById('custLocation').value;
+  if (!shopMuni || !custMuni) return 0;
+  return (DELIVERY[shopMuni] && DELIVERY[shopMuni][custMuni]) || 0;
+}
+
+function updateCartBar() {
+  const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const qty   = cart.reduce((s, c) => s + c.qty, 0);
+  const bar   = document.getElementById('cartBar');
+  if (!qty) {
+    bar.classList.remove('visible', 'expanded');
+    cartExpanded = false;
+    return;
+  }
+  bar.classList.add('visible');
+  document.getElementById('pillCount').textContent = qty;
+  document.getElementById('pillTotal').textContent = `₱${total + getDeliveryFee()}`;
+  document.getElementById('pillLabel').textContent = qty === 1 ? '1 item' : qty + ' items';
+  if (cartExpanded) renderCartSummary();
+}
+
+// ── Create Order ──────────────────────────────────────────────────────────
+async function createOrder() {
+  const name     = document.getElementById('custName').value.trim();
+  const phone    = document.getElementById('custPhone').value.trim();
+  const address  = document.getElementById('custAddress').value.trim();
+  const custMuni = document.getElementById('custLocation').value;
+  const payment  = document.getElementById('paymentMethod').value;
+  const notes    = document.getElementById('orderNotes').value.trim();
+
+  if (activeRest && activeRest.status === 'Closed') { showToast('This restaurant is currently closed. Please try again later.'); return; }
+  if (!cart.length)   { showToast('Add at least one item first!'); return; }
+  if (!name)          { showToast('Please enter your name'); return; }
+  if (!custMuni)      { showToast('Select your delivery area'); return; }
+  if (!payment)       { showToast('Select a payment method'); return; }
+
+  const food    = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const fee     = getDeliveryFee();
+  const total   = food + fee;
+  const orderId = 'ORD-' + Date.now();
+  // Send a proper ISO 8601 string to the DB — a locale-formatted string
+  // like "7/8/2026, 8:00:00 PM" is not guaranteed to parse cleanly into a
+  // Postgres timestamp/timestamptz column and can silently fail the insert.
+  // Manila-local display formatting (if needed) should happen when the
+  // value is *read back*, not when it's written.
+  const ts      = new Date().toISOString();
+
+  const itemsText = cart.map(c => {
+    const v = c.variantName ? ` (${c.variantName})` : '';
+    const m = c.mods && c.mods.length ? ` +${c.mods.map(m => m.name).join('+')}` : '';
+    const q = c.qty > 1 ? ` x${c.qty}` : '';
+    return `${c.name}${v}${m}${q} (₱${c.price * c.qty})`;
+  }).join(', ');
+
+  // Structured line items for the new order_items / order_item_modifiers
+  // tables — built from data the cart already carries, no schema change
+  // to the cart object itself.
+  const orderItems = cart.map(c => {
+    const unitPrice = c.price; // already includes variant + modifier adjustments
+    return {
+      productId: c.productId,
+      variantId: c.variantId || null,
+      quantity: c.qty,
+      unitPrice,
+      subtotal: unitPrice * c.qty,
+      modifiers: (c.mods || []).map(m => ({ modifierId: m.id, price: m.adj || 0 })),
+    };
+  });
+
+  const payload = {
+    orderId, timestamp: ts, name, phone,
+    location: address, custMuni,
+    items: itemsText, readableItems: itemsText, // kept for now during transition; backend ignores these
+    orderItems,
+    foodTotal: food, deliveryFee: fee, total,
+    status: 'Pending', paymentMethod: payment, notes,
+    shop: { id: activeRest.id, name: activeRest.name, location: activeRest.municipality }
+  };
+
+  const btn = document.getElementById('orderBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="ring" style="width:16px;height:16px;border-width:2px;"></div> Sending…';
+
+  try {
+    await ordersApi.createOrder(payload, orderItems);
+    saveLastOrder(orderId, phone);
+
+    if (payment === 'Xendit') {
+      // Online payment: create the Xendit invoice, then leave the page
+      // entirely for their checkout — no confirmation screen here, the
+      // customer sees payment status after Xendit redirects them back
+      // (see checkPaymentReturn()).
+      btn.innerHTML = '<div class="ring" style="width:16px;height:16px;border-width:2px;"></div> Redirecting to payment…';
+      const pay = await paymentsApi.createPayment({ orderId, name, phone });
+      if (pay.success && pay.paymentUrl) {
+        window.location.href = pay.paymentUrl;
+        return; // leaving the page — nothing else to do
+      }
+      // Payment could not be started, but the order itself DID save —
+      // don't strand the customer, let them know it's still on file.
+      showToast(pay.error || 'Could not start online payment. Your order was saved — please contact us or choose Cash on Delivery next time.');
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Create Order';
+      return;
+    }
+
+    showOrderConfirmation(name, total, payment, orderId);
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Create Order';
+    showToast('Error sending order. Try again.');
+  }
+}
+
+// ── Payment return handling ────────────────────────────────────────────────
+// Xendit redirects the customer's browser back here after checkout (see
+// success_redirect_url / failure_redirect_url in create-payment.js). That
+// redirect is NOT the source of truth — the webhook already updated (or is
+// about to update) the order in Supabase server-side. We just poll the
+// order a few times so the UI can catch up to whatever the webhook did.
+async function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order');
+  if (params.get('payment') !== 'return' || !orderId) return;
+
+  // Clean the URL so a refresh doesn't re-trigger this.
+  window.history.replaceState({}, '', window.location.pathname);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'paymentStatusOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;';
+  const render = (icon, title, msg, extra = '') => {
+    overlay.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div style="font-size:3rem;margin-bottom:10px;">${icon}</div>
+      <h2 style="font-size:1.2rem;font-weight:800;color:var(--txt);margin:0 0 6px;">${title}</h2>
+      <p style="font-size:0.86rem;color:var(--txt2);margin:0 0 12px;">${msg}</p>
+      ${extra}
+      <button onclick="document.getElementById('paymentStatusOverlay').remove()" style="background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:0.9rem;font-weight:700;cursor:pointer;width:100%;margin-top:8px;">Back to Menu</button>
+    </div>`;
+  };
+  render('⏳', 'Checking your payment…', `Order <strong style="color:var(--txt);">${orderId}</strong>`);
+  document.body.appendChild(overlay);
+
+  // Poll for up to ~20s — the webhook usually lands within a second or two,
+  // but give it real headroom before telling the customer to keep waiting.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    let order;
+    try {
+      order = await ordersApi.getOrderStatus(orderId);
+    } catch (err) {
+      console.error('checkPaymentReturn: getOrderStatus failed', orderId, err);
+      break;
+    }
+    if (order && order.paymentStatus === 'Paid') {
+      render('✅', 'Payment Successful!', `Order <strong style="color:var(--txt);">${orderId}</strong> is paid. The restaurant has been notified.`);
+      return;
+    }
+    if (order && order.paymentStatus === 'Failed') {
+      render('❌', 'Payment Failed', `Order <strong style="color:var(--txt);">${orderId}</strong> was not paid. You can try again from Track Order.`);
+      return;
+    }
+    if (order && order.paymentStatus === 'Expired') {
+      render('⌛', 'Payment Link Expired', `Order <strong style="color:var(--txt);">${orderId}</strong>'s payment window closed. Please place a new order.`);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  // Still pending after polling — don't leave the customer stuck watching
+  // a spinner forever; point them at Track Order, which shows live status.
+  render('⏳', 'Still confirming…', `We haven't received confirmation for <strong style="color:var(--txt);">${orderId}</strong> yet. Check "Track Order" in a moment — it'll update as soon as we hear from the payment provider.`);
+}
+
+// Shared copy-icon SVG — used on both the post-order confirmation screen
+// and the track-order result view, so both "Copy" buttons match.
+const COPY_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
+function copyOrderId(id) {
+  const copyFn = () => {
+    const el = document.createElement('textarea');
+    el.value = id;
+    el.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(id).catch(copyFn);
+  } else {
+    copyFn();
+  }
+  // Visual feedback on the button
+  const btn = document.getElementById('copyOrderIdBtn');
+  if (btn) {
+    btn.innerHTML = '✓ Copied!';
+    btn.style.color = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }
+  showToast('Order ID copied! ✓');
+}
+
+function showOrderConfirmation(name, total, payment, orderId) {
+  document.getElementById('cartBar').classList.remove('expanded');
+  cartExpanded = false;
+  const payLabel = payment === 'GCash' ? '📱 GCash' : '💵 Cash on Delivery';
+  const overlay  = document.createElement('div');
+  overlay.id = 'orderOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;';
+  overlay.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:3rem;margin-bottom:10px;">✅</div>
+    <h2 style="font-size:1.2rem;font-weight:800;color:var(--txt);margin:0 0 6px;">Order Received!</h2>
+    <p style="font-size:0.86rem;color:var(--txt2);margin:0 0 12px;">Thanks <strong style="color:var(--txt);">${name}</strong>! Your order has been sent.</p>
+
+    <!-- Order ID + Copy -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0 0 12px;text-align:left;">
+      <div style="font-size:0.68rem;color:var(--txt2);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px;">Order ID</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span style="font-family:monospace;font-size:0.82rem;font-weight:700;color:var(--txt);letter-spacing:0.5px;">${orderId}</span>
+        <button id="copyOrderIdBtn" onclick="copyOrderId('${orderId}')"
+          style="display:flex;align-items:center;gap:4px;background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:0.72rem;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s;">
+          ${COPY_ICON} Copy
+        </button>
+      </div>
+    </div>
+
+    <p style="font-size:0.9rem;font-weight:700;color:var(--success);margin:0 0 2px;">₱${total}</p>
+    <p style="font-size:0.8rem;color:var(--txt2);margin:0 0 4px;">${payLabel}</p>
+    <p style="font-size:0.76rem;color:var(--txt2);margin:0 0 20px;">Our dispatcher will contact you shortly.</p>
+
+    <button onclick="resetAfterOrder(); openTrackModal();" style="background:var(--card2);color:var(--accent);border:1.5px solid var(--border);border-radius:12px;padding:11px 20px;font-size:0.85rem;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;">📦 Track This Order</button>
+    <button onclick="resetAfterOrder()" style="background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:0.9rem;font-weight:700;cursor:pointer;width:100%;">Back to Menu</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function resetAfterOrder() {
+  cart = [];
+  saveCartToStorage();
+  updateCartBar();
+  ['custName','custPhone','custAddress','custLocation','paymentMethod','orderNotes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const overlay = document.getElementById('orderOverlay');
+  if (overlay) overlay.remove();
+  const btn = document.getElementById('orderBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Create Order';
+  }
+}
+
+// ── Cart Persistence ──────────────────────────────────────────────────────
+function saveCartToStorage() {
+  try { localStorage.setItem('np_cart_v2', JSON.stringify({ cart, activeId })); } catch(_) {}
+}
+function loadCartFromStorage() {
+  try {
+    const saved = localStorage.getItem('np_cart_v2');
+    if (!saved) return;
+    const d = JSON.parse(saved);
+    cart     = d.cart     || [];
+    activeId = d.activeId || null;
+  } catch(_) {}
+}
+
+// ── Order Tracking ────────────────────────────────────────────────────────
+// Standardized order statuses (v4 — with driver handoff)
+const STATUS_STEPS = ['Pending', 'Accepted', 'Preparing', 'Ready for Pickup', 'Picked Up / On the Way', 'Delivered'];
+const STATUS_CANCELLED = 'Cancelled';
+
+function saveLastOrder(orderId, phone) {
+  try { localStorage.setItem('np_last_order', JSON.stringify({ orderId, phone })); } catch(_) {}
+}
+function getLastOrder() {
+  try { return JSON.parse(localStorage.getItem('np_last_order') || 'null'); } catch(_) { return null; }
+}
+
+function openTrackModal() {
+  const last = getLastOrder();
+  document.getElementById('trackOrderId').value = last ? last.orderId : '';
+  document.getElementById('trackResult').innerHTML = '';
+  document.getElementById('trackModal').classList.add('open');
+  if (last) checkOrderStatus();
+}
+function closeTrackModal(e) {
+  if (!e || e.target === document.getElementById('trackModal')) {
+    document.getElementById('trackModal').classList.remove('open');
+  }
+}
+
+async function checkOrderStatus() {
+  const id = document.getElementById('trackOrderId').value.trim();
+  const resultEl = document.getElementById('trackResult');
+  if (!id) { resultEl.innerHTML = '<div style="color:var(--danger);font-size:0.82rem;">Please enter an Order ID.</div>'; return; }
+  resultEl.innerHTML = '<div class="loading-ring"><div class="ring"></div> Checking…</div>';
+  try {
+    // No more cache-busting/no-cors workarounds needed — this is a direct,
+    // authenticated-by-anon-key Supabase query, not an Apps Script Web App
+    // GET request, so there's no service-worker/CORS-preflight issue to
+    // dodge here anymore.
+    const order = await ordersApi.getOrderStatus(id);
+    if (!order) throw new Error('not-found');
+    renderOrderStatus(order);
+    // Scroll result into view on mobile
+    setTimeout(() => resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  } catch (err) {
+    let msg;
+    if (err.message === 'not-found') {
+      msg = 'Order not found. Double-check the Order ID and try again.';
+    } else if (err.message.startsWith('bad-json')) {
+      msg = 'Unexpected response from the server. It may need to be redeployed.';
+    } else if (err.message.startsWith('http-')) {
+      msg = 'Server error (' + err.message.replace('http-', '') + '). Try again in a moment.';
+    } else {
+      msg = 'Could not reach the server. Check your connection and try again.';
+    }
+    resultEl.innerHTML = `
+      <div style="color:var(--danger);font-size:0.82rem;">⚠️ ${msg}</div>
+      <button onclick="checkOrderStatus()" style="margin-top:8px;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--txt2);font-size:0.76rem;cursor:pointer;">🔄 Try Again</button>`;
+  }
+}
+
+// ── Status display config ─────────────────────────────────────────────────
+const STATUS_ICONS = {
+  'Pending':   '🕐',
+  'Accepted':  '✅',
+  'Preparing': '👨‍🍳',
+  'Delivered': '🛵',
+  'Cancelled': '❌',
+  // Legacy aliases — map old statuses to new ones gracefully
+  'New':             'Pending',
+  'Out for Delivery':'Delivered',
+};
+
+// Normalize any legacy status value to the new standard
+function normalizeStatus(raw) {
+  const s = (raw || 'Pending').trim();
+  if (s === 'New')              return 'Pending';
+  if (s === 'Out for Delivery') return 'Picked Up / On the Way'; // legacy value
+  if (STATUS_STEPS.includes(s) || s === STATUS_CANCELLED) return s;
+  return 'Pending'; // safe default
+}
+
+function renderOrderStatus(order) {
+  const resultEl = document.getElementById('trackResult');
+  const status = normalizeStatus(order.status);
+
+  // ── Cancelled state ───────────────────────────────────────────────────
+  if (status === STATUS_CANCELLED) {
+    resultEl.innerHTML = `
+      <div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:6px;">❌</div>
+        <div style="font-weight:700;color:var(--danger);font-size:0.95rem;">Order Cancelled</div>
+        ${order.shop ? `<div style="font-size:0.78rem;color:var(--txt2);margin-top:4px;">${order.shop}</div>` : ''}
+        ${order.orderId ? `<div style="font-size:0.72rem;color:#52526A;margin-top:6px;font-family:monospace;">${order.orderId}</div>` : ''}
+      </div>`;
+    return;
+  }
+
+  const idx = Math.max(0, STATUS_STEPS.indexOf(status));
+
+  const stepsHtml = STATUS_STEPS.map((s, i) => {
+    const done    = i < idx;
+    const active  = i === idx;
+    const future  = i > idx;
+    const icons   = { 'Pending':'🕐', 'Accepted':'✅', 'Preparing':'👨‍🍳', 'Ready for Pickup':'📦', 'Picked Up / On the Way':'🛵', 'Delivered':'🎉' };
+    const dotBg   = done ? 'var(--success)' : active ? 'var(--primary)' : 'var(--card2)';
+    const dotBord = done ? 'var(--success)' : active ? 'var(--primary)' : 'var(--border)';
+    const dotCol  = (done || active) ? '#fff' : 'var(--txt2)';
+    const label   = `<div style="font-size:0.84rem;font-weight:${active ? '700' : '500'};color:${future ? 'var(--txt2)' : 'var(--txt)'};">${icons[s] || ''} ${s}</div>`;
+    const dot     = `<div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;background:${dotBg};color:${dotCol};border:2px solid ${dotBord};transition:all 0.3s;">
+      ${done ? '✓' : i + 1}
+    </div>`;
+    const connector = i < STATUS_STEPS.length - 1
+      ? `<div style="width:2px;height:18px;background:${done ? 'var(--success)' : 'var(--border)'};margin-left:10px;transition:background 0.3s;"></div>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:10px;">${dot}${label}</div>${connector}`;
+  }).join('');
+
+  // Estimated time hint for active statuses
+  const timeHints = {
+    'Pending':                  'Waiting for restaurant to accept…',
+    'Accepted':                 'Restaurant has accepted your order!',
+    'Preparing':                'Your food is being prepared…',
+    'Ready for Pickup':         'Ready! Waiting for a driver to pick it up…',
+    'Picked Up / On the Way':   'Your order is on its way! 🛵',
+    'Delivered':                'Delivered — enjoy your meal! 🎉',
+  };
+
+  // Driver info card, shown once a driver has picked up the order
+  const driverHtml = (order.driver && (status === 'Picked Up / On the Way' || status === 'Delivered'))
+    ? `<div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:0.78rem;color:var(--txt);">
+        🛵 <strong>${order.driver.name || 'Your driver'}</strong>${order.driver.phone ? ` · ${order.driver.phone}` : ''}
+      </div>`
+    : '';
+
+  resultEl.innerHTML = `
+    <div style="background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+      <div style="font-size:0.72rem;color:var(--txt2);margin-bottom:2px;">Order ID</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span style="font-size:0.84rem;font-weight:700;color:var(--txt);font-family:monospace;">${order.orderId || '—'}</span>
+        ${order.orderId ? `<button onclick="copyOrderId('${order.orderId}')"
+          style="display:flex;align-items:center;gap:4px;background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:0.72rem;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0;">
+          ${COPY_ICON} Copy
+        </button>` : ''}
+      </div>
+      ${order.shop ? `<div style="font-size:0.74rem;color:var(--txt2);margin-top:4px;">📍 ${order.shop}</div>` : ''}
+    </div>
+    <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px 12px;font-size:0.78rem;color:var(--accent);margin-bottom:14px;">
+      ${timeHints[status] || ''}
+    </div>
+    ${driverHtml}
+    <div style="padding:4px 0 8px;">${stepsHtml}</div>
+    ${order.total ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.85rem;align-items:center;">
+      <span style="color:var(--txt2);">Total</span><strong style="color:var(--success);">₱${order.total}</strong>
+    </div>` : ''}
+    <button onclick="checkOrderStatus()" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--txt2);font-size:0.78rem;cursor:pointer;">
+      🔄 Refresh Status
+    </button>`;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Re-attach functions referenced by inline onclick/onchange handlers ────
+// (needed because <script type="module"> no longer puts top-level
+// function declarations on `window` automatically — same fix already
+// applied in admin.html / driver.html for the same reason)
+Object.assign(window, {
+  selectRestaurant, selectCategory, selectVariant, modalQtyChange, toggleMod,
+  confirmAddToCart, closeModal, adjustCartQty, clearCart, toggleCart,
+  mobileGoBack, createOrder, copyOrderId, resetAfterOrder,
+  openTrackModal, closeTrackModal, checkOrderStatus,
+  openItemModal, applyFilters, debouncedApplyFilters, updateDeliveryFee,
+});
+</script>
+</body>
+</html>
