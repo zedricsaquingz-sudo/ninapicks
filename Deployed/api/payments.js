@@ -26,3 +26,23 @@ export async function createPayment({ orderId, name, phone, email }) {
     return { success: false, error: 'Could not reach the server' };
   }
 }
+// Cancels a pending payment: voids the Xendit invoice (if one exists)
+// and marks the order as Cancelled.
+export async function cancelPayment(orderId) {
+  try {
+    const res = await fetch('/.netlify/functions/cancel-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId }),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+      console.error('cancelPayment failed for order', orderId, body.error);
+      return { success: false, error: body.error || 'Could not cancel payment' };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('cancelPayment: network/parse error', orderId, err);
+    return { success: false, error: 'Could not reach the server' };
+  }
+}
