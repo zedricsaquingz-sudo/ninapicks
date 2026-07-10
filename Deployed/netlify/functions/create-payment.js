@@ -113,8 +113,8 @@ exports.handler = async (event) => {
       given_names: name || order.customer_name || 'Customer',
       mobile_number: phone || order.phone || undefined,
     },
-    success_redirect_url: `${SITE_URL}/index.html?order=${encodeURIComponent(order.order_id)}&payment=return`,
-    failure_redirect_url: `${SITE_URL}/index.html?order=${encodeURIComponent(order.order_id)}&payment=return`,
+success_redirect_url: `${SITE_URL}/index.html?order=${encodeURIComponent(order.order_id)}&payment=return&status=success`,
+    failure_redirect_url: `${SITE_URL}/index.html?order=${encodeURIComponent(order.order_id)}&payment=return&status=cancelled`,
   };
 
   let xenditRes, xenditBody;
