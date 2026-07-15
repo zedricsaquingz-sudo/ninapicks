@@ -23,7 +23,11 @@ function mapOrderRow(o) {
     orderId: o.order_id, timestamp: o.timestamp, name: o.customer_name,
     phone: o.phone, location: o.location,
     items: (o.order_items || [])
-      .map(i => `${i.quantity}x ${i.products?.name || ''}${i.product_variants ? ' (' + i.product_variants.variant_name + ')' : ''}`)
+      .map(i => {
+        const base = `${i.quantity}x ${i.products?.name || ''}${i.product_variants ? ' (' + i.product_variants.variant_name + ')' : ''}`;
+        const mods = (i.order_item_modifiers || []).map(m => m.modifiers?.name).filter(Boolean);
+        return mods.length ? `${base} +${mods.join('+')}` : base;
+      })
       .join(', '),
     total: Number(o.total) || 0, status: o.status,
     restaurantId: o.restaurants?.legacy_code, restaurantName: o.restaurants?.name,
@@ -36,7 +40,8 @@ function mapOrderRow(o) {
 }
 
 const ORDER_SELECT = `*, restaurants(legacy_code, name), drivers(driver_id, name, phone),
-  order_items(quantity, unit_price, subtotal, products(name), product_variants(variant_name))`;
+  order_items(quantity, unit_price, subtotal, products(name), product_variants(variant_name),
+    order_item_modifiers(price, modifiers(name)))`;
 
 // admin.html — this restaurant's orders only (RLS also enforces this
 // server-side; the .eq() here just avoids fetching rows you can't see).
@@ -69,7 +74,9 @@ export async function getAllOrders({ activeOnly = false } = {}) {
 export async function getDriverOrders(driverId) {
   const [{ data, error }, driver] = await Promise.all([
     supabase
-      .from('orders').select(`*, restaurants(name, address)`)
+      .from('orders').select(`*, restaurants(name, address),
+        order_items(quantity, unit_price, subtotal, products(name), product_variants(variant_name),
+          order_item_modifiers(price, modifiers(name)))`)
       .eq('driver_id', driverId)
       .order('timestamp', { ascending: false }),
     getDriverForOrders(driverId),
@@ -82,6 +89,14 @@ export async function getDriverOrders(driverId) {
       phone: o.phone, location: o.location, total: Number(o.total) || 0,
       status: o.status, restaurantName: o.restaurants?.name,
       restaurantLocation: o.restaurants?.address,
+      notes: o.notes,
+      items: (o.order_items || [])
+        .map(i => {
+          const base = `${i.quantity}x ${i.products?.name || ''}${i.product_variants ? ' (' + i.product_variants.variant_name + ')' : ''}`;
+          const mods = (i.order_item_modifiers || []).map(m => m.modifiers?.name).filter(Boolean);
+          return mods.length ? `${base} +${mods.join('+')}` : base;
+        })
+        .join(', '),
     })),
   };
 }
