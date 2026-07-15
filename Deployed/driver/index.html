@@ -355,6 +355,8 @@ function orderCardHtml(o) {
     <div class="order-shop">🏪 ${o.restaurantName || ''}</div>
     <div class="order-customer">👤 ${o.name || 'Unknown'} · ${o.phone || ''}</div>
     <div class="order-loc">📍 ${o.location || o.restaurantLocation || ''}</div>
+    <div class="order-items" style="font-size:0.8rem;color:var(--txt2);margin:4px 0;">${o.items || 'No items listed'}</div>
+    ${o.notes ? `<div style="font-size:0.75rem;color:var(--accent);margin:4px 0;padding:6px 10px;background:rgba(124,58,237,0.08);border-radius:6px;">📝 ${o.notes}</div>` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
       <span class="status-badge status-${slug}">${o.status}</span>
       <span class="order-total">₱${o.total}</span>
