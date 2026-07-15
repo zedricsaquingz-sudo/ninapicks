@@ -744,6 +744,67 @@ if ('serviceWorker' in navigator) {
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
 
+// ── URL routing (per-restaurant deep links) ────────────────────────────────
+// Lets /r0001 or /sober-wings open that restaurant directly, instead of
+// every visit landing on the bare picker. Matches against either the
+// restaurant's legacy_code (r.id) or a slug built from its name — no
+// backend/schema change needed since allRestaurants is already fully
+// loaded client-side for the picker.
+function slugify(name) {
+  return String(name || '').trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function getPathSegment() {
+  return decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '');
+}
+
+function findRestaurantByPath(seg) {
+  if (!seg) return null;
+  const norm = seg.toLowerCase();
+  return allRestaurants.find(r => String(r.id).toLowerCase() === norm || slugify(r.name) === norm) || null;
+}
+
+// Modals/overlays (item modal, track order, order confirmation, payment
+// status) don't have their own URL — but they DO need the hardware/browser
+// Back button to close them instead of leaving the page (or doing nothing).
+// Each one pushes a no-op history entry when it opens, so a Back tap has
+// something of "its own" to pop; handlePopState below checks for an open
+// overlay FIRST and just closes it, before ever touching restaurant routing.
+function pushModalState(name) {
+  window.history.pushState({ modal: name }, '', window.location.pathname + window.location.search);
+}
+
+function handlePopState() {
+  const itemModalEl = document.getElementById('itemModal');
+  if (itemModalEl && itemModalEl.classList.contains('open')) {
+    closeModal();
+    return;
+  }
+  const trackModalEl = document.getElementById('trackModal');
+  if (trackModalEl && trackModalEl.classList.contains('open')) {
+    closeTrackModal();
+    return;
+  }
+  if (document.getElementById('orderOverlay')) {
+    resetAfterOrder();
+    return;
+  }
+  const paymentOverlay = document.getElementById('paymentStatusOverlay');
+  if (paymentOverlay) {
+    paymentOverlay.remove();
+    return;
+  }
+
+  const seg = getPathSegment();
+  if (!seg) {
+    if (activeId !== null) mobileGoBack();
+    return;
+  }
+  const match = findRestaurantByPath(seg);
+  if (match && match.id !== activeId) selectRestaurant(match.id, { updateUrl: false });
+}
+
 // ── Startup ───────────────────────────────────────────────────────────────
 (async function init() {
   loadCartFromStorage();
@@ -751,6 +812,17 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferr
   applyFilters();
   updateCartBar();
   checkPaymentReturn(); // no-op unless the URL has ?payment=return&order=...
+
+  const seg = getPathSegment();
+  if (seg) {
+    const match = findRestaurantByPath(seg);
+    if (match) {
+      await selectRestaurant(match.id, { updateUrl: false });
+    } else {
+      console.warn('No restaurant matches URL path:', seg);
+    }
+  }
+  window.addEventListener('popstate', handlePopState);
 })();
 
 // ── Load Restaurants ──────────────────────────────────────────────────────
@@ -841,6 +913,7 @@ function mobileGoBack() {
   updateCartBar();
   renderSidebar();
   showMobileListView();
+  if (getPathSegment() !== '') window.history.pushState({}, '', '/');
 }
 
 // ── Filter & Render ───────────────────────────────────────────────────────
@@ -915,7 +988,10 @@ function renderSidebar() {
 }
 
 // ── Select Restaurant ──────────────────────────────────────────────────────
-async function selectRestaurant(id) {
+// updateUrl:false is used when we're *responding* to the URL (initial deep
+// link, or a browser back/forward via popstate) — otherwise we'd push a
+// second, redundant history entry on top of the one that's already there.
+async function selectRestaurant(id, { updateUrl = true } = {}) {
   if (activeId && activeId !== id) { cart = []; saveCartToStorage(); }
   activeId   = id;
   activeRest = allRestaurants.find(r => r.id === id);
@@ -923,6 +999,13 @@ async function selectRestaurant(id) {
   activeCategories  = [];
   activeCategoryId  = null;
   loadedCategoryIds = new Set();
+
+  if (updateUrl && activeRest) {
+    const newPath = '/' + (slugify(activeRest.name) || activeRest.id);
+    if (getPathSegment() !== newPath.slice(1)) {
+      window.history.pushState({ restaurantId: id }, '', newPath);
+    }
+  }
 
   renderSidebar();
   updateCartBar();
@@ -1257,6 +1340,7 @@ function openItemModal(productIdx) {
 
   renderModalModifiers();
   updateModalPrice();
+  pushModalState('item');
   document.getElementById('itemModal').classList.add('open');
 
   // Fetch this item's modifiers on demand (cheap no-op if already cached
@@ -1596,6 +1680,7 @@ async function checkPaymentReturn() {
     </div>`;
   };
   render('⏳', 'Checking your payment…', `Order <strong style="color:var(--txt);">${orderId}</strong>`);
+  pushModalState('paymentStatus');
   document.body.appendChild(overlay);
 
   // Poll for up to ~20s — the webhook usually lands within a second or two,
@@ -1693,6 +1778,7 @@ function showOrderConfirmation(name, total, payment, orderId) {
     <button onclick="resetAfterOrder(); openTrackModal();" style="background:var(--card2);color:var(--accent);border:1.5px solid var(--border);border-radius:12px;padding:11px 20px;font-size:0.85rem;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;">📦 Track This Order</button>
     <button onclick="resetAfterOrder()" style="background:linear-gradient(135deg,var(--primary),#6D28D9);color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:0.9rem;font-weight:700;cursor:pointer;width:100%;">Back to Menu</button>
   </div>`;
+  pushModalState('orderConfirm');
   document.body.appendChild(overlay);
 }
 
@@ -1743,6 +1829,7 @@ function openTrackModal() {
   const last = getLastOrder();
   document.getElementById('trackOrderId').value = last ? last.orderId : '';
   document.getElementById('trackResult').innerHTML = '';
+  pushModalState('track');
   document.getElementById('trackModal').classList.add('open');
   if (last) checkOrderStatus();
 }
