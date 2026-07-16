@@ -129,6 +129,14 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 .status-unknown{background:var(--txt2);}
 .status-closed{background:var(--danger);}
 .rest-code{font-size:0.62rem;color:#52526A;position:absolute;top:9px;right:9px;}
+.rest-card-body{display:flex;gap:10px;align-items:flex-start;}
+.rest-logo-wrap{position:relative;width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;}
+.rest-logo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  background:var(--card2);color:var(--txt2);font-weight:700;font-size:1.05rem;}
+.rest-logo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.detail-logo-wrap{width:64px;height:64px;border-radius:14px;}
+.detail-logo-wrap .rest-logo-fallback{font-size:1.6rem;}
+.detail-header-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;}
 
 /* ── SKELETON LOADING ───────────────────────────────────────────────────── */
 .skeleton{
@@ -954,18 +962,38 @@ function muniClass(m) {
   return 'badge-cat';
 }
 
+// Renders a restaurant's logo if logo_url is set, with a same-size initial-
+// letter fallback underneath that's revealed automatically if the image
+// 404s/fails to load (onerror removes the <img>, exposing the div beneath) —
+// so a missing/broken logo never shows a broken-image icon to customers.
+function restaurantLogoHtml(r, wrapClass) {
+  const initial = (r.name || '?').trim().charAt(0).toUpperCase() || '?';
+  const img = r.logo_url
+    ? `<img class="rest-logo" src="${r.logo_url}" alt="" loading="lazy" onerror="this.remove()">`
+    : '';
+  return `<div class="rest-logo-wrap ${wrapClass || ''}">
+    <div class="rest-logo-fallback">${initial}</div>
+    ${img}
+  </div>`;
+}
+
 function buildCardHtml(r, cls) {
   const dot    = r.status === 'Open' ? 'status-open' : r.status === 'Closed' ? 'status-closed' : 'status-unknown';
   const active = r.id === activeId ? ' active' : '';
   return `<div class="${cls}${active}" onclick="selectRestaurant('${r.id}')">
     <span class="rest-code">${r.id}</span>
-    <div class="rest-name">${r.name}</div>
-    <div class="rest-meta">
-      <span class="status-dot ${dot}"></span>
-      <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
-      <span class="badge badge-cat">${r.category}</span>
+    <div class="rest-card-body">
+      ${restaurantLogoHtml(r)}
+      <div style="min-width:0;flex:1;">
+        <div class="rest-name">${r.name}</div>
+        <div class="rest-meta">
+          <span class="status-dot ${dot}"></span>
+          <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
+          <span class="badge badge-cat">${r.category}</span>
+        </div>
+        ${r.hours ? `<div class="rest-hours">🕐 ${r.hours}</div>` : ''}
+      </div>
     </div>
-    ${r.hours ? `<div class="rest-hours">🕐 ${r.hours}</div>` : ''}
   </div>`;
 }
 
@@ -1265,12 +1293,17 @@ function renderDetail() {
 
   const detailHtml = `<div class="restaurant-detail">
     <div class="detail-header">
-      <div class="detail-name">${r.name}</div>
-      <div class="detail-badges">
-        <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
-        <span class="badge badge-cat">${r.category}</span>
-        <span style="font-size:0.72rem;color:${statusColor};font-weight:600;">● ${r.status || 'Unknown'}</span>
-        <span style="font-size:0.68rem;color:#52526A;">${r.id}</span>
+      <div class="detail-header-top">
+        ${restaurantLogoHtml(r, 'detail-logo-wrap')}
+        <div style="min-width:0;flex:1;">
+          <div class="detail-name">${r.name}</div>
+          <div class="detail-badges">
+            <span class="badge ${muniClass(r.municipality)}">${r.municipality}</span>
+            <span class="badge badge-cat">${r.category}</span>
+            <span style="font-size:0.72rem;color:${statusColor};font-weight:600;">● ${r.status || 'Unknown'}</span>
+            <span style="font-size:0.68rem;color:#52526A;">${r.id}</span>
+          </div>
+        </div>
       </div>
       <div class="detail-info">
         ${r.address  ? `<div class="info-item">📍 <span>${r.address}${r.barangay ? ' · ' + r.barangay : ''}</span></div>` : ''}
