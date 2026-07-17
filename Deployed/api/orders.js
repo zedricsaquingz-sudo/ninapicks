@@ -18,17 +18,42 @@ const VALID_STATUSES = [
 ];
 const DRIVER_ALLOWED_STATUSES = ['Picked Up / On the Way', 'Delivered'];
 
+// Structured line items — one entry per product ordered, with its
+// variant/modifiers nested underneath instead of flattened into text.
+// Used by admin/dashboard/driver to render a real per-line list instead
+// of a single comma-joined paragraph (which was hard to scan at a glance,
+// especially for orders with several items or add-ons).
+function mapOrderItems(rawItems) {
+  return (rawItems || []).map(i => ({
+    name:      i.products?.name || '',
+    variant:   i.product_variants?.variant_name || null,
+    quantity:  i.quantity,
+    unitPrice: Number(i.unit_price) || 0,
+    subtotal:  Number(i.subtotal) || 0,
+    modifiers: (i.order_item_modifiers || [])
+      .map(m => ({ name: m.modifiers?.name || '', price: Number(m.price) || 0 }))
+      .filter(m => m.name),
+  }));
+}
+
+// Legacy flat string ("2x Burger (Large) +Extra Cheese, 1x Fries"), kept
+// for anything still reading `order.items` as text (e.g. the "copy order
+// details for Slack/Viber" helper in dashboard.html) — derived from the
+// same structured data above so the two representations never drift.
+function flattenOrderItemsText(orderItems) {
+  return (orderItems || []).map(it => {
+    const base = `${it.quantity}x ${it.name}${it.variant ? ' (' + it.variant + ')' : ''}`;
+    return it.modifiers.length ? `${base} +${it.modifiers.map(m => m.name).join('+')}` : base;
+  }).join(', ');
+}
+
 function mapOrderRow(o) {
+  const orderItems = mapOrderItems(o.order_items);
   return {
     orderId: o.order_id, timestamp: o.timestamp, name: o.customer_name,
     phone: o.phone, location: o.location,
-    items: (o.order_items || [])
-      .map(i => {
-        const base = `${i.quantity}x ${i.products?.name || ''}${i.product_variants ? ' (' + i.product_variants.variant_name + ')' : ''}`;
-        const mods = (i.order_item_modifiers || []).map(m => m.modifiers?.name).filter(Boolean);
-        return mods.length ? `${base} +${mods.join('+')}` : base;
-      })
-      .join(', '),
+    orderItems,                          // NEW — structured, for per-line rendering
+    items: flattenOrderItemsText(orderItems), // unchanged shape/value — backward compatible
     total: Number(o.total) || 0, status: o.status,
     restaurantId: o.restaurants?.legacy_code, restaurantName: o.restaurants?.name,
     paymentMethod: o.payment_method, notes: o.notes,
@@ -84,20 +109,18 @@ export async function getDriverOrders(driverId) {
   if (error) { console.error('getDriverOrders failed for driver', driverId, error); throw error; }
   return {
     driver,
-    orders: data.map(o => ({
-      orderId: o.order_id, timestamp: o.timestamp, name: o.customer_name,
-      phone: o.phone, location: o.location, total: Number(o.total) || 0,
-      status: o.status, restaurantName: o.restaurants?.name,
-      restaurantLocation: o.restaurants?.address,
-      notes: o.notes,
-      items: (o.order_items || [])
-        .map(i => {
-          const base = `${i.quantity}x ${i.products?.name || ''}${i.product_variants ? ' (' + i.product_variants.variant_name + ')' : ''}`;
-          const mods = (i.order_item_modifiers || []).map(m => m.modifiers?.name).filter(Boolean);
-          return mods.length ? `${base} +${mods.join('+')}` : base;
-        })
-        .join(', '),
-    })),
+    orders: data.map(o => {
+      const orderItems = mapOrderItems(o.order_items);
+      return {
+        orderId: o.order_id, timestamp: o.timestamp, name: o.customer_name,
+        phone: o.phone, location: o.location, total: Number(o.total) || 0,
+        status: o.status, restaurantName: o.restaurants?.name,
+        restaurantLocation: o.restaurants?.address,
+        notes: o.notes,
+        orderItems,                               // NEW — structured, for per-line rendering
+        items: flattenOrderItemsText(orderItems),  // unchanged shape/value — backward compatible
+      };
+    }),
   };
 }
 
