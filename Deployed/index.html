@@ -215,6 +215,8 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 .menu-item:active{transform:scale(0.97);}
 .menu-item.unavailable{opacity:0.38;cursor:not-allowed;pointer-events:none;}
 .unavail-tag{font-size:0.65rem;color:var(--danger);font-weight:600;margin-top:4px;}
+.item-thumb{width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block;}
+.modal-photo{width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;display:block;}
 
 /* variant pills on menu item */
 .variant-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
@@ -531,7 +533,7 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 <header>
   <div class="header-top">
     <div>
-      <div class="logo">🦅 Nina<span>Picks</span></div>
+      <div class="logo" onclick="goHome()" style="cursor:pointer;">🦅 Nina<span>Picks</span></div>
       <div class="tagline">Nueva Vizcaya Food Directory</div>
     </div>
     <button class="track-order-btn" onclick="openTrackModal()">📦 Track Order</button>
@@ -611,6 +613,7 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 <div class="modal-overlay" id="itemModal" onclick="closeModal(event)">
   <div class="modal-box">
     <div class="modal-handle"></div>
+    <img class="modal-photo" id="modalPhoto" src="" alt="" style="display:none;">
     <div class="modal-title" id="modalName"></div>
     <div class="modal-cat"  id="modalCat"></div>
     <div class="modal-notes" id="modalNotes"></div>
@@ -920,8 +923,27 @@ function mobileGoBack() {
   saveCartToStorage();
   updateCartBar();
   renderSidebar();
-  showMobileListView();
+  if (isMobile()) {
+    showMobileListView();
+  } else {
+    // Desktop replaces orderPanel's entire innerHTML when a menu loads
+    // (see renderDetail), which wipes out the original #desktopPlaceholder
+    // markup -- so "going back" on desktop has to re-inject it, not just
+    // toggle a display style like the mobile views do.
+    document.getElementById('orderPanel').innerHTML = `
+      <div class="panel-placeholder" id="desktopPlaceholder">
+        <div class="icon">🦅</div>
+        <p>Select a restaurant to view its menu.</p>
+      </div>`;
+  }
   if (getPathSegment() !== '') window.history.pushState({}, '', '/');
+}
+
+// Logo / site name click -- same "return to picker" reset as mobileGoBack,
+// just under a name that makes sense from the header rather than the
+// mobile-only back button.
+function goHome() {
+  mobileGoBack();
 }
 
 // ── Filter & Render ───────────────────────────────────────────────────────
@@ -1263,6 +1285,7 @@ function renderDetail() {
 
     return `<div class="menu-item${isUnavail ? ' unavailable' : ''}" id="mi-${gi}" onclick="${isUnavail ? '' : `openItemModal(${gi})`}" title="${isClosed ? 'This restaurant is currently closed' : ''}">
       <span class="qty-badge" id="qbadge-${gi}"></span>
+      ${prod.imageUrl ? `<img class="item-thumb" src="${prod.imageUrl}" alt="" loading="lazy" onerror="this.remove()">` : ''}
       <div class="item-name">${prod.name}</div>
       ${prod.description ? `<div class="item-notes">★ ${prod.description}</div>` : ''}
       <div class="item-price">${prod.basePrice === 0 && !(prod.variants && prod.variants.length) ? '<span class="free-badge">Included / Free</span>' : priceDisplay}</div>
@@ -1352,6 +1375,15 @@ function openItemModal(productIdx) {
   document.getElementById('modalCat').textContent   = prod.category || '';
   document.getElementById('modalNotes').textContent = prod.description || '';
   document.getElementById('modalNotes').style.display = prod.description ? 'block' : 'none';
+  const modalPhotoEl = document.getElementById('modalPhoto');
+  if (prod.imageUrl) {
+    modalPhotoEl.src = prod.imageUrl;
+    modalPhotoEl.style.display = 'block';
+    modalPhotoEl.onerror = () => { modalPhotoEl.style.display = 'none'; };
+  } else {
+    modalPhotoEl.style.display = 'none';
+    modalPhotoEl.src = '';
+  }
   document.getElementById('modalQty').textContent   = 1;
 
   const varSec = document.getElementById('modalVariantsSection');
