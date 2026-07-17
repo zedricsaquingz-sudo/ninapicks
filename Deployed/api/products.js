@@ -26,7 +26,7 @@ export async function getMenu(restCode) {
   return data.map(p => ({
     productId: p.product_id, name: p.name, category: p.category,
     basePrice: Number(p.base_price) || 0, description: p.description,
-    available: p.available,
+    available: p.available, imageUrl: p.image_url,
     variants: (p.product_variants || []).map(v => ({
       variantId: v.variant_id, variantName: v.variant_name,
       priceAdjustment: Number(v.price_adjustment) || 0, available: v.available,
@@ -57,7 +57,7 @@ export async function getMenuList(restCode) {
   return data.map(p => ({
     productId: p.product_id, name: p.name, category: p.category,
     basePrice: Number(p.base_price) || 0, description: p.description,
-    available: p.available,
+    available: p.available, imageUrl: p.image_url,
     variants: (p.product_variants || []).map(v => ({
       variantId: v.variant_id, variantName: v.variant_name,
       priceAdjustment: Number(v.price_adjustment) || 0, available: v.available,
