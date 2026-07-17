@@ -177,54 +177,24 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   text-transform:none;letter-spacing:0;
 }
 
-/* ── CATEGORY QUICK-NAV ──────────────────────────────────────────────────
-   Vertical list (never horizontal scroll), sticky while the menu scrolls.
-   Desktop: a narrow sticky column to the left of the menu content.
-   Mobile: a sticky bar showing the current category, which expands
-   downward into the same vertical list — still no horizontal scroll. ── */
-.menu-layout{display:flex;align-items:flex-start;gap:22px;}
-.menu-content{flex:1;min-width:0;}
-
-.category-nav{
-  flex:0 0 190px;position:sticky;top:0;
-  align-self:flex-start;max-height:calc(100vh - 40px);overflow-y:auto;
-  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-  padding:6px;
+/* ── CATEGORY TABS (unused now that categories render stacked, kept in
+   case a future tab/quick-jump nav wants this styling again) ───────────── */
+.category-tabs{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px;
+  border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;
 }
-.category-nav-list{display:flex;flex-direction:column;gap:2px;}
-.category-nav-item{
-  display:flex;align-items:center;justify-content:space-between;gap:6px;
-  text-align:left;font-size:0.8rem;font-weight:600;padding:9px 11px;
-  border-radius:8px;border:none;background:transparent;color:var(--txt2);
-  cursor:pointer;transition:all 0.15s;width:100%;
+.category-tabs::-webkit-scrollbar{display:none;}
+.category-tab{
+  flex:0 0 auto;font-size:0.76rem;font-weight:600;padding:7px 13px;
+  border-radius:999px;border:1.5px solid var(--border);background:var(--card2);
+  color:var(--txt2);cursor:pointer;transition:all 0.15s;white-space:nowrap;
 }
-.category-nav-item:hover{background:var(--card2);color:var(--txt);}
-.category-nav-item.active{background:var(--primary);color:#fff;}
-.category-nav-item.active .cat-count{color:rgba(255,255,255,0.8);}
-.category-nav-item .cat-count{font-size:0.66rem;opacity:0.7;font-weight:600;}
-
-/* Mobile: collapse the column into a sticky bar with a toggle that reveals
-   the same vertical list beneath it (dropdown), instead of a sidebar. */
-.category-nav-toggle{display:none;}
-@media(max-width:900px){
-  .menu-layout{display:block;}
-  .category-nav{
-    position:sticky;top:44px;z-index:15;flex:none;max-height:none;
-    overflow:visible;border-radius:0;border-width:0 0 1px;
-    padding:0;margin:0 -22px 14px;
-  }
-  .category-nav-toggle{
-    display:flex;align-items:center;justify-content:space-between;width:100%;
-    padding:11px 22px;background:var(--card);border:none;cursor:pointer;
-    font-size:0.83rem;font-weight:700;color:var(--txt);
-  }
-  .category-nav-toggle .chevron{transition:transform 0.2s;color:var(--txt2);font-size:0.7rem;}
-  .category-nav.open .category-nav-toggle .chevron{transform:rotate(180deg);}
-  .category-nav-list{
-    display:none;padding:4px 14px 10px;background:var(--card);
-    max-height:60vh;overflow-y:auto;border-bottom:1px solid var(--border);
-  }
-  .category-nav.open .category-nav-list{display:flex;}
+.category-tab:hover{border-color:var(--accent);color:var(--accent);}
+.category-tab.active{
+  background:var(--primary);border-color:var(--primary);color:#fff;
+}
+.category-tab .cat-count{
+  font-size:0.65rem;opacity:0.75;margin-left:3px;
 }
 
 /* ── MENU SECTION ───────────────────────────────────────────────────────── */
@@ -234,18 +204,26 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   color:var(--txt2);margin-bottom:10px;display:flex;align-items:center;gap:6px;
 }
 .menu-section h3::after{content:'';flex:1;height:1px;background:var(--border);}
-.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+/* One row per product, foodpanda-style: text on the left, square thumb
+   on the right, full-width rows stacked top to bottom instead of a
+   multi-column card grid. */
+.menu-grid{display:flex;flex-direction:column;gap:8px;}
 
 .menu-item{
-  border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 13px;
+  display:flex;align-items:center;gap:12px;
+  border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;
   cursor:pointer;transition:all 0.18s;position:relative;user-select:none;
   background:var(--card2);
 }
-.menu-item:hover{border-color:var(--primary);background:var(--selected-tint2);box-shadow:0 4px 20px rgba(124,58,237,0.2);transform:translateY(-2px);}
-.menu-item:active{transform:scale(0.97);}
+.menu-item:hover{border-color:var(--primary);background:var(--selected-tint2);box-shadow:0 4px 20px rgba(124,58,237,0.2);}
+.menu-item:active{transform:scale(0.98);}
 .menu-item.unavailable{opacity:0.38;cursor:not-allowed;pointer-events:none;}
 .unavail-tag{font-size:0.65rem;color:var(--danger);font-weight:600;margin-top:4px;}
-.item-thumb{width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block;}
+.item-info{flex:1;min-width:0;}
+.item-thumb{
+  width:78px;height:78px;object-fit:cover;border-radius:10px;
+  display:block;flex-shrink:0;margin:0;
+}
 .modal-photo{width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px;display:block;}
 
 /* variant pills on menu item */
@@ -269,13 +247,10 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes eagleFlap{0%,100%{transform:scaleY(1) scaleX(1)}50%{transform:scaleY(0.75) scaleX(1.15)}}
 
-.item-name{font-size:0.84rem;font-weight:600;padding-right:6px;line-height:1.3;color:var(--txt);}
-.item-desc{
-  font-size:0.72rem;color:var(--txt2);margin-top:3px;line-height:1.35;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
+.item-name{font-size:0.84rem;font-weight:600;padding-right:6px;line-height:1.3;color:var(--txt);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .item-cat{font-size:0.66rem;color:var(--txt2);margin-top:2px;}
-.item-price{font-size:0.93rem;font-weight:700;color:var(--success);margin-top:5px;}
+.item-price{font-size:0.87rem;font-weight:700;color:var(--success);margin-top:4px;}
 .item-notes{font-size:0.67rem;color:var(--warn);margin-top:2px;font-style:italic;}
 .free-badge{font-size:0.67rem;background:rgba(52,211,153,0.15);color:var(--success);padding:1px 6px;border-radius:10px;}
 .tap-hint{font-size:0.73rem;color:var(--txt2);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
@@ -514,61 +489,6 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   background:none;color:var(--txt2);padding:4px;border:none;cursor:pointer;font-size:1rem;
 }
 
-/* ── TRACK MODAL TABS (Search vs My Orders) ─────────────────────────────── */
-.track-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--card2);border-radius:10px;padding:3px;}
-.track-tab{
-  flex:1;text-align:center;padding:8px 10px;border-radius:8px;border:none;background:transparent;
-  color:var(--txt2);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s;
-}
-.track-tab.active{background:var(--primary);color:#fff;}
-
-/* ── ORDER HISTORY LIST ─────────────────────────────────────────────────── */
-.history-empty{padding:24px 4px;text-align:center;color:var(--txt2);font-size:0.83rem;}
-.history-card{
-  border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;
-  cursor:pointer;transition:border-color 0.15s;background:var(--card2);
-}
-.history-card:hover{border-color:var(--accent);}
-.history-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-.history-shop{font-size:0.84rem;font-weight:700;color:var(--txt);}
-.history-id{font-size:0.68rem;color:var(--txt2);font-family:monospace;margin-top:2px;}
-.history-date{font-size:0.68rem;color:var(--txt2);margin-top:3px;}
-.status-pill{
-  font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;
-  text-transform:uppercase;letter-spacing:0.3px;
-}
-.status-pill.done{background:rgba(52,211,153,0.15);color:var(--success);}
-.status-pill.active{background:rgba(124,58,237,0.15);color:var(--accent);}
-.status-pill.cancelled{background:rgba(248,113,113,0.15);color:var(--danger);}
-.history-detail{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);}
-.btn-review{
-  margin-top:10px;width:100%;padding:10px;border-radius:8px;border:1.5px solid var(--primary);
-  background:transparent;color:var(--accent);font-size:0.8rem;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;
-}
-.btn-review:hover{background:var(--selected-tint);}
-.btn-review.done{border-color:var(--border);color:var(--txt2);cursor:default;}
-.btn-review.done:hover{background:transparent;}
-.btn-back-track{
-  background:transparent;border:none;color:var(--accent);font-size:0.78rem;font-weight:600;
-  cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:4px;padding:0;
-}
-
-/* ── REVIEW MODAL ────────────────────────────────────────────────────────── */
-.review-field{margin-bottom:12px;}
-.review-field label{font-size:0.72rem;color:var(--txt2);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px;}
-.review-static{
-  padding:9px 11px;border-radius:8px;background:var(--card2);border:1.5px solid var(--border);
-  font-size:0.84rem;color:var(--txt);font-weight:600;
-}
-.review-field textarea{
-  width:100%;padding:9px 11px;border-radius:8px;border:1.5px solid var(--border);
-  background:var(--card2);color:var(--txt);font-size:0.83rem;font-family:inherit;resize:vertical;min-height:70px;
-}
-.review-field textarea:focus{outline:none;border-color:var(--accent);}
-.review-success{text-align:center;padding:20px 4px;}
-.review-success .icon{font-size:2.4rem;margin-bottom:8px;}
-
 /* ── LOADING RING ───────────────────────────────────────────────────────── */
 .loading-ring{
   display:flex;align-items:center;justify-content:center;height:160px;
@@ -635,8 +555,8 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   #mobileListPlaceholder .icon{font-size:3rem;opacity:0.2;}
   #mobileListPlaceholder p{font-size:0.88rem;}
 
-  /* Menu grid: 2 columns on mobile */
-  .menu-grid{ grid-template-columns:1fr 1fr; }
+  /* Menu grid: stays one product per row on mobile, foodpanda-style */
+  .item-thumb{ width:64px;height:64px; }
   .cart-order-fields{ grid-template-columns:1fr; }
   header{ padding:10px 14px; }
   .filters{ gap:6px; }
@@ -656,8 +576,7 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
       <div class="logo" onclick="goHome()" style="cursor:pointer;">🦅 Nina<span>Picks</span></div>
       <div class="tagline">Nueva Vizcaya Food Directory</div>
     </div>
-    <button class="track-order-btn" onclick="openTrackModal('search')">📦 Track Order</button>
-    <button class="track-order-btn" onclick="openTrackModal('history')">🧾 My Orders</button>
+    <button class="track-order-btn" onclick="openTrackModal()">📦 Track Order</button>
   </div>
   <div class="filters">
     <div class="filter-group">
@@ -776,59 +695,17 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   </div>
 </div>
 
-<!-- TRACK ORDER / MY ORDERS MODAL -->
+<!-- TRACK ORDER MODAL -->
 <div class="modal-overlay" id="trackModal" onclick="closeTrackModal(event)">
-  <div class="modal-box" style="max-width:440px;max-height:82vh;overflow-y:auto;">
-    <div class="modal-handle"></div>
-    <div class="track-tabs">
-      <button class="track-tab" id="trackTabSearch" onclick="switchTrackTab('search')">📦 Track by Order ID</button>
-      <button class="track-tab" id="trackTabHistory" onclick="switchTrackTab('history')">🧾 My Orders</button>
-    </div>
-
-    <!-- Search-by-ID panel (guest lookup — works for any order, including completed ones) -->
-    <div id="trackPanelSearch">
-      <div class="modal-cat" style="margin-bottom:14px;">Enter your Order ID to check its status — completed orders can be looked up too.</div>
-      <input id="trackOrderId" type="text" placeholder="e.g. ORD-1782888939406"
-             style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.85rem;margin-bottom:12px;"
-             onkeydown="if(event.key==='Enter')checkOrderStatus()">
-      <button class="btn-add" onclick="checkOrderStatus()">Check Status</button>
-      <div id="trackResult" style="margin-top:18px;"></div>
-    </div>
-
-    <!-- My Orders panel — orders placed from this device/browser, remembered locally.
-         (This app doesn't have account login, so history is tied to this device rather
-         than a signed-in account — see notes for the login-based alternative.) -->
-    <div id="trackPanelHistory" style="display:none;">
-      <div id="historyList"><div class="loading-ring"><div class="ring"></div> Loading your orders…</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- REVIEW MODAL -->
-<div class="modal-overlay" id="reviewModal" onclick="closeReviewModal(event)">
   <div class="modal-box" style="max-width:440px;">
     <div class="modal-handle"></div>
-    <div class="modal-title">⭐ Leave a Review</div>
-    <div class="modal-cat" style="margin-bottom:16px;">Tell us how we did — it helps the restaurant and other customers.</div>
-    <div id="reviewFormBody">
-      <div class="review-field">
-        <label>Restaurant</label>
-        <div class="review-static" id="reviewRestName"></div>
-      </div>
-      <div class="review-field">
-        <label>Order ID</label>
-        <div class="review-static" id="reviewOrderId" style="font-family:monospace;"></div>
-      </div>
-      <div class="review-field">
-        <label>Comment</label>
-        <textarea id="reviewComment" placeholder="How was the food, packaging, delivery time, etc.?" rows="3"></textarea>
-      </div>
-      <div class="review-field">
-        <label>Suggestion <span style="text-transform:none;opacity:0.7;">(optional)</span></label>
-        <textarea id="reviewSuggestion" placeholder="Anything we could do better?" rows="2"></textarea>
-      </div>
-      <button class="btn-add" id="reviewSubmitBtn" onclick="submitReview()">Submit Review</button>
-    </div>
+    <div class="modal-title">📦 Track Your Order</div>
+    <div class="modal-cat" style="margin-bottom:14px;">Enter your Order ID to check its status</div>
+    <input id="trackOrderId" type="text" placeholder="e.g. ORD-1782888939406"
+           style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);color:var(--txt);font-size:0.85rem;margin-bottom:12px;"
+           onkeydown="if(event.key==='Enter')checkOrderStatus()">
+    <button class="btn-add" onclick="checkOrderStatus()">Check Status</button>
+    <div id="trackResult" style="margin-top:18px;"></div>
   </div>
 </div>
 
@@ -890,7 +767,6 @@ import * as restaurantsApi from './api/restaurants.js';
 import * as productsApi from './api/products.js';
 import * as ordersApi from './api/orders.js';
 import * as paymentsApi from './api/payments.js';
-import * as reviewsApi from './api/reviews.js';
 
 // ── State ─────────────────────────────────────────────────────────────────
 let allRestaurants  = [];
@@ -966,11 +842,6 @@ function handlePopState() {
   const trackModalEl = document.getElementById('trackModal');
   if (trackModalEl && trackModalEl.classList.contains('open')) {
     closeTrackModal();
-    return;
-  }
-  const reviewModalEl = document.getElementById('reviewModal');
-  if (reviewModalEl && reviewModalEl.classList.contains('open')) {
-    closeReviewModal();
     return;
   }
   if (document.getElementById('orderOverlay')) {
@@ -1461,12 +1332,13 @@ function renderDetail() {
 
     return `<div class="menu-item${isUnavail ? ' unavailable' : ''}" id="mi-${gi}" onclick="${isUnavail ? '' : `openItemModal(${gi})`}" title="${isClosed ? 'This restaurant is currently closed' : ''}">
       <span class="qty-badge" id="qbadge-${gi}"></span>
+      <div class="item-info">
+        <div class="item-name">${prod.name}</div>
+        <div class="item-price">${prod.basePrice === 0 && !(prod.variants && prod.variants.length) ? '<span class="free-badge">Included / Free</span>' : priceDisplay}</div>
+        ${pillsSection}
+        ${isUnavail ? `<div class="unavail-tag">🚫 ${isClosed ? 'Shop closed' : 'Not available'}</div>` : ''}
+      </div>
       ${prod.imageUrl ? `<img class="item-thumb" src="${prod.imageUrl}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-      <div class="item-name">${prod.name}</div>
-      ${prod.description ? `<div class="item-desc">${truncateDesc(prod.description)}</div>` : ''}
-      <div class="item-price">${prod.basePrice === 0 && !(prod.variants && prod.variants.length) ? '<span class="free-badge">Included / Free</span>' : priceDisplay}</div>
-      ${pillsSection}
-      ${isUnavail ? `<div class="unavail-tag">🚫 ${isClosed ? 'Shop closed' : 'Not available'}</div>` : ''}
     </div>`;
   };
 
@@ -1486,26 +1358,9 @@ function renderDetail() {
           ? `<div class="menu-grid">${itemsForCat.map(renderMenuItem).join('')}</div>`
           : `<div style="color:var(--txt2);font-size:0.85rem;padding:0 0 16px;">No items in this category.</div>`;
       }
-      return `<div class="menu-section" id="cat-section-${c.id}" data-cat-id="${c.id}"><h3>${c.name}<span class="cat-count">${c.itemCount}</span></h3>${sectionHtml}</div>`;
+      return `<div class="menu-section"><h3>${c.name}<span class="cat-count">${c.itemCount}</span></h3>${sectionHtml}</div>`;
     }).join('');
   }
-
-  // Sticky vertical category quick-nav — a plain list (no horizontal
-  // scrolling anywhere), collapsible into a sticky bar on mobile via CSS.
-  // Only worth showing once there's more than one category to jump between.
-  const showCatNav = activeCategories && activeCategories.length > 1;
-  const catNavItems = showCatNav ? activeCategories.map((c, i) =>
-    `<button class="category-nav-item${i === 0 ? ' active' : ''}" data-cat-id="${c.id}" onclick="scrollToCategory('${c.id}')">
-      <span>${c.name}</span><span class="cat-count">${c.itemCount}</span>
-    </button>`).join('') : '';
-  const catNavHtml = showCatNav ? `
-    <nav class="category-nav" id="categoryNav">
-      <button class="category-nav-toggle" onclick="toggleCategoryNav()">
-        <span id="categoryNavCurrent">${activeCategories[0].name}</span>
-        <span class="chevron">▾</span>
-      </button>
-      <div class="category-nav-list">${catNavItems}</div>
-    </nav>` : '';
 
   const detailHtml = `<div class="restaurant-detail">
     <div class="detail-header">
@@ -1531,10 +1386,7 @@ function renderDetail() {
     ${isClosed
       ? `<div class="closed-banner">🚫 This restaurant is currently closed. Ordering is disabled until it reopens.</div>`
       : `<div class="tap-hint">Tap an item to add to order <span>Tap again to adjust</span></div>`}
-    <div class="menu-layout">
-      ${catNavHtml}
-      <div class="menu-content">${menuHtml}</div>
-    </div>
+    ${menuHtml}
   </div>`;
 
   if (isMobile()) {
@@ -1547,74 +1399,6 @@ function renderDetail() {
     // Desktop: replace order panel
     document.getElementById('orderPanel').innerHTML = detailHtml;
   }
-  if (showCatNav) setupCategoryNavObserver();
-}
-
-// Truncate a product description to a short preview for the menu card.
-// Full text is always shown in the item modal (see openItemModal) — this
-// is just a teaser so cards stay a predictable, compact height.
-function truncateDesc(desc, len = 65) {
-  const d = String(desc || '').trim();
-  if (d.length <= len) return d;
-  return d.slice(0, len).replace(/\s+\S*$/, '') + '…';
-}
-
-// ── Category quick-nav (sticky, vertical, scroll-to) ───────────────────────
-let categoryNavObserver = null;
-
-function scrollToCategory(categoryId) {
-  const el = document.getElementById(`cat-section-${categoryId}`);
-  if (!el) return;
-  // Close the mobile dropdown right away so the scroll target is visible.
-  const nav = document.getElementById('categoryNav');
-  if (nav) nav.classList.remove('open');
-
-  const mobile = isMobile();
-  const offset = mobile ? 110 : 10; // clears the sticky bars above the section
-  if (mobile) {
-    const y = el.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  } else {
-    // Desktop scrolls inside #orderPanel, not the window — measure the
-    // element relative to that container rather than relying on
-    // offsetTop, which isn't reliable across non-positioned ancestors.
-    const scroller = document.getElementById('orderPanel');
-    const targetScroll = scroller.scrollTop + (el.getBoundingClientRect().top - scroller.getBoundingClientRect().top) - offset;
-    scroller.scrollTo({ top: targetScroll, behavior: 'smooth' });
-  }
-  setActiveCategoryNavItem(categoryId);
-}
-
-function toggleCategoryNav() {
-  const nav = document.getElementById('categoryNav');
-  if (nav) nav.classList.toggle('open');
-}
-
-function setActiveCategoryNavItem(categoryId) {
-  document.querySelectorAll('.category-nav-item').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.catId === categoryId);
-  });
-  const current = document.getElementById('categoryNavCurrent');
-  const activeBtn = document.querySelector(`.category-nav-item[data-cat-id="${categoryId}"]`);
-  if (current && activeBtn) current.textContent = activeBtn.querySelector('span').textContent;
-}
-
-// Highlights the nav item for whichever category section is currently in
-// view, so the sticky list tracks scroll position instead of only reacting
-// to clicks. Re-created every renderDetail() call since the DOM is rebuilt.
-function setupCategoryNavObserver() {
-  if (categoryNavObserver) { categoryNavObserver.disconnect(); categoryNavObserver = null; }
-  const sections = document.querySelectorAll('.menu-section[data-cat-id]');
-  if (!sections.length) return;
-  const root = isMobile() ? null : document.getElementById('orderPanel');
-  categoryNavObserver = new IntersectionObserver((entries) => {
-    // Pick the entry closest to the top of the viewport that's intersecting.
-    const visible = entries.filter(e => e.isIntersecting);
-    if (!visible.length) return;
-    visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-    setActiveCategoryNavItem(visible[0].target.dataset.catId);
-  }, { root, rootMargin: '-120px 0px -70% 0px', threshold: 0 });
-  sections.forEach(s => categoryNavObserver.observe(s));
 }
 
 // ── Item Modal ─────────────────────────────────────────────────────────────
@@ -1979,7 +1763,7 @@ async function createOrder() {
 
   try {
     await ordersApi.createOrder(payload, orderItems);
-    saveLastOrder(orderId, phone, activeRest ? activeRest.name : '');
+    saveLastOrder(orderId, phone);
 
     if (payment === 'Xendit') {
       // Online payment: create the Xendit invoice, then leave the page
@@ -2173,155 +1957,24 @@ function loadCartFromStorage() {
 const STATUS_STEPS = ['Pending', 'Accepted', 'Preparing', 'Ready for Pickup', 'Picked Up / On the Way', 'Delivered'];
 const STATUS_CANCELLED = 'Cancelled';
 
-function saveLastOrder(orderId, phone, shopName) {
+function saveLastOrder(orderId, phone) {
   try { localStorage.setItem('np_last_order', JSON.stringify({ orderId, phone })); } catch(_) {}
-  addToOrderHistory(orderId, phone, shopName);
 }
 function getLastOrder() {
   try { return JSON.parse(localStorage.getItem('np_last_order') || 'null'); } catch(_) { return null; }
 }
 
-// ── Order history (device-local) ───────────────────────────────────────────
-// This app has no account/login system, so "order history" is tied to the
-// device/browser that placed the order rather than a signed-in account —
-// every order id the customer has placed from here is remembered locally,
-// and its live status/timeline is always re-fetched from the server (never
-// just replayed from cache), so a completed order looks the same whether
-// it was placed five minutes or five weeks ago. See the accompanying notes
-// for what a true account-based history would additionally need.
-const ORDER_HISTORY_KEY = 'np_order_history_v1';
-const ORDER_HISTORY_MAX = 25;
-
-function getOrderHistoryList() {
-  try {
-    const list = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY) || '[]');
-    return Array.isArray(list) ? list : [];
-  } catch (_) { return []; }
-}
-
-function addToOrderHistory(orderId, phone, shopName) {
-  if (!orderId) return;
-  try {
-    let list = getOrderHistoryList().filter(o => o.orderId !== orderId);
-    list.unshift({ orderId, phone, shopName: shopName || '', placedAt: new Date().toISOString() });
-    if (list.length > ORDER_HISTORY_MAX) list = list.slice(0, ORDER_HISTORY_MAX);
-    localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(list));
-  } catch (_) {}
-}
-
-// Reviews already submitted this device — an optimistic UI guard only.
-// The real one-review-per-order rule is enforced server-side (unique
-// constraint on reviews.order_id), so this just avoids an unnecessary
-// round trip / flash of the form for orders we already know are reviewed.
-function getReviewedOrderIds() {
-  try {
-    const list = JSON.parse(localStorage.getItem('np_reviewed_orders_v1') || '[]');
-    return Array.isArray(list) ? list : [];
-  } catch (_) { return []; }
-}
-function markOrderReviewed(orderId) {
-  try {
-    const list = getReviewedOrderIds();
-    if (!list.includes(orderId)) {
-      list.push(orderId);
-      localStorage.setItem('np_reviewed_orders_v1', JSON.stringify(list));
-    }
-  } catch (_) {}
-}
-
-function isOrderCompleted(rawStatus) {
-  return normalizeStatus(rawStatus) === 'Delivered';
-}
-
-function openTrackModal(tab) {
+function openTrackModal() {
   const last = getLastOrder();
   document.getElementById('trackOrderId').value = last ? last.orderId : '';
   document.getElementById('trackResult').innerHTML = '';
   pushModalState('track');
   document.getElementById('trackModal').classList.add('open');
-  switchTrackTab(tab || 'search');
-  if ((tab || 'search') === 'search' && last) checkOrderStatus();
+  if (last) checkOrderStatus();
 }
 function closeTrackModal(e) {
   if (!e || e.target === document.getElementById('trackModal')) {
     document.getElementById('trackModal').classList.remove('open');
-  }
-}
-
-function switchTrackTab(tab) {
-  const isHistory = tab === 'history';
-  document.getElementById('trackTabSearch').classList.toggle('active', !isHistory);
-  document.getElementById('trackTabHistory').classList.toggle('active', isHistory);
-  document.getElementById('trackPanelSearch').style.display  = isHistory ? 'none' : 'block';
-  document.getElementById('trackPanelHistory').style.display = isHistory ? 'block' : 'none';
-  if (isHistory) renderOrderHistory();
-}
-
-// Fetches live status for every locally-remembered order and renders them
-// as expandable cards (tap to reveal the full timeline again — completed
-// orders stay fully visible and reopenable, same as any other order).
-async function renderOrderHistory() {
-  const listEl = document.getElementById('historyList');
-  const entries = getOrderHistoryList();
-  if (!entries.length) {
-    listEl.innerHTML = `<div class="history-empty">You haven't placed any orders from this device yet.<br>Once you do, they'll show up here — including after they're completed.</div>`;
-    return;
-  }
-  listEl.innerHTML = '<div class="loading-ring"><div class="ring"></div> Loading your orders…</div>';
-
-  const results = await Promise.all(entries.map(async (e) => {
-    try { return { entry: e, order: await ordersApi.getOrderStatus(e.orderId) }; }
-    catch (_) { return { entry: e, order: null }; }
-  }));
-
-  listEl.innerHTML = results.map(({ entry, order }) => {
-    const status  = order ? normalizeStatus(order.status) : null;
-    const done    = status === 'Delivered';
-    const cancel  = status === STATUS_CANCELLED;
-    const pillCls = cancel ? 'cancelled' : done ? 'done' : 'active';
-    const pillTxt = !order ? 'Unavailable' : cancel ? 'Cancelled' : done ? 'Completed' : status;
-    const shopName = entry.shopName || (order && order.shop) || 'Order';
-    const dateTxt = entry.placedAt ? new Date(entry.placedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-
-    return `<div class="history-card" onclick="toggleHistoryDetail('${entry.orderId}')">
-      <div class="history-card-top">
-        <div>
-          <div class="history-shop">${shopName}</div>
-          <div class="history-id">${entry.orderId}</div>
-          ${dateTxt ? `<div class="history-date">${dateTxt}</div>` : ''}
-        </div>
-        <span class="status-pill ${pillCls}">${pillTxt}</span>
-      </div>
-      <div class="history-detail" id="hist-detail-${entry.orderId}" style="display:none;"></div>
-    </div>`;
-  }).join('');
-
-  // Stash fetched orders + review button markup so expanding a card doesn't
-  // need another network round trip.
-  results.forEach(({ entry, order }) => { historyOrderCache[entry.orderId] = order; });
-}
-
-const historyOrderCache = {};
-
-function toggleHistoryDetail(orderId) {
-  const detailEl = document.getElementById(`hist-detail-${orderId}`);
-  if (!detailEl) return;
-  const opening = detailEl.style.display === 'none';
-  detailEl.style.display = opening ? 'block' : 'none';
-  if (!opening || detailEl.dataset.rendered) return;
-
-  const order = historyOrderCache[orderId];
-  if (!order) { detailEl.innerHTML = '<div style="color:var(--danger);font-size:0.78rem;">Could not load this order\'s details.</div>'; return; }
-  detailEl.dataset.rendered = '1';
-  detailEl.innerHTML = renderOrderTimelineHtml(order);
-
-  const shopName = order.shop || '';
-  const reviewed = getReviewedOrderIds().includes(orderId);
-  if (isOrderCompleted(order.status)) {
-    const btn = reviewed
-      ? `<button class="btn-review done">✓ Review submitted</button>`
-      : `<button class="btn-review" onclick="event.stopPropagation();openReviewModal('${orderId}','${shopName.replace(/'/g,"\\'")}','${(order.shopId||'').replace(/'/g,"\\'")}')">⭐ Leave a Review</button>`;
-    detailEl.insertAdjacentHTML('beforeend', btn);
   }
 }
 
@@ -2374,46 +2027,24 @@ function normalizeStatus(raw) {
   const s = (raw || 'Pending').trim();
   if (s === 'New')              return 'Pending';
   if (s === 'Out for Delivery') return 'Picked Up / On the Way'; // legacy value
-  if (s === 'Completed')        return 'Delivered'; // treated as the same final/terminal state
   if (STATUS_STEPS.includes(s) || s === STATUS_CANCELLED) return s;
   return 'Pending'; // safe default
 }
 
 function renderOrderStatus(order) {
   const resultEl = document.getElementById('trackResult');
-  resultEl.innerHTML = renderOrderTimelineHtml(order) + `
-    <button onclick="checkOrderStatus()" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--txt2);font-size:0.78rem;cursor:pointer;">
-      🔄 Refresh Status
-    </button>`;
-
-  // Completed orders stay fully visible and trackable — and become
-  // eligible for a review, whether the customer found them by searching
-  // an Order ID (guest) or via My Orders.
-  if (isOrderCompleted(order.status) && order.orderId) {
-    const alreadyReviewed = getReviewedOrderIds().includes(order.orderId);
-    const shopName = (order.shop || '').replace(/'/g, "\\'");
-    const btnHtml = alreadyReviewed
-      ? `<button class="btn-review done">✓ Review submitted</button>`
-      : `<button class="btn-review" onclick="openReviewModal('${order.orderId}','${shopName}','${(order.shopId||'').replace(/'/g,"\\'")}')">⭐ Leave a Review</button>`;
-    resultEl.insertAdjacentHTML('beforeend', btnHtml);
-  }
-}
-
-// Builds the order-timeline HTML (cancelled banner or step tracker + total)
-// without touching the DOM directly, so both the search-result panel and
-// the My Orders history cards can render the exact same timeline.
-function renderOrderTimelineHtml(order) {
   const status = normalizeStatus(order.status);
 
   // ── Cancelled state ───────────────────────────────────────────────────
   if (status === STATUS_CANCELLED) {
-    return `
+    resultEl.innerHTML = `
       <div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:12px;padding:16px;text-align:center;">
         <div style="font-size:2rem;margin-bottom:6px;">❌</div>
         <div style="font-weight:700;color:var(--danger);font-size:0.95rem;">Order Cancelled</div>
         ${order.shop ? `<div style="font-size:0.78rem;color:var(--txt2);margin-top:4px;">${order.shop}</div>` : ''}
         ${order.orderId ? `<div style="font-size:0.72rem;color:#52526A;margin-top:6px;font-family:monospace;">${order.orderId}</div>` : ''}
       </div>`;
+    return;
   }
 
   const idx = Math.max(0, STATUS_STEPS.indexOf(status));
@@ -2453,21 +2084,7 @@ function renderOrderTimelineHtml(order) {
       </div>`
     : '';
 
-  // Itemized line items — only renders if the backend includes an `items`
-  // array on the order object (see the getOrderDetails recommendation in
-  // the accompanying notes). Safe no-op if it's not there yet.
-  const itemsHtml = (Array.isArray(order.items) && order.items.length)
-    ? `<div style="margin:0 0 14px;padding:10px 12px;background:var(--card2);border-radius:8px;">
-        <div style="font-size:0.7rem;color:var(--txt2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Items</div>
-        ${order.items.map(it => `
-          <div style="display:flex;justify-content:space-between;gap:8px;font-size:0.79rem;padding:3px 0;">
-            <span style="color:var(--txt);">${it.qty ? it.qty + '× ' : ''}${it.name}${it.variantName ? ' (' + it.variantName + ')' : ''}</span>
-            <span style="color:var(--txt2);white-space:nowrap;">₱${it.subtotal ?? ''}</span>
-          </div>`).join('')}
-      </div>`
-    : '';
-
-  return `
+  resultEl.innerHTML = `
     <div style="background:var(--card2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
       <div style="font-size:0.72rem;color:var(--txt2);margin-bottom:2px;">Order ID</div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -2483,106 +2100,13 @@ function renderOrderTimelineHtml(order) {
       ${timeHints[status] || ''}
     </div>
     ${driverHtml}
-    ${itemsHtml}
     <div style="padding:4px 0 8px;">${stepsHtml}</div>
     ${order.total ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.85rem;align-items:center;">
       <span style="color:var(--txt2);">Total</span><strong style="color:var(--success);">₱${order.total}</strong>
-    </div>` : ''}`;
-}
-
-// ── Reviews ─────────────────────────────────────────────────────────────
-// currentReviewOrder holds { orderId, restaurantName, restaurantId } for
-// whichever completed order the review form is currently open for.
-let currentReviewOrder = null;
-
-async function openReviewModal(orderId, restaurantName, restaurantId) {
-  currentReviewOrder = {
-    orderId,
-    restaurantName: restaurantName || '',
-    // Prefer an id tied to the actual order being reviewed over the
-    // currently-open restaurant, since My Orders can review an order for a
-    // restaurant the customer isn't currently browsing. Falls back to
-    // activeRest.id only when reviewing right after checkout on that shop's
-    // page, and to null if neither is available (backend can still match
-    // the review to a restaurant via order_id if restaurant_id is null).
-    restaurantId: restaurantId || (activeRest && activeRest.id) || null,
-  };
-  // Restore the original form markup in case a previous open of this modal
-  // left it showing a "thanks!" or "already reviewed" state.
-  if (!window._reviewFormTemplate) window._reviewFormTemplate = document.getElementById('reviewFormBody').innerHTML;
-  document.getElementById('reviewFormBody').innerHTML = window._reviewFormTemplate;
-  document.getElementById('reviewRestName').textContent = currentReviewOrder.restaurantName || '—';
-  document.getElementById('reviewOrderId').textContent  = orderId;
-  document.getElementById('reviewComment').value = '';
-  document.getElementById('reviewSuggestion').value = '';
-
-  pushModalState('review');
-  document.getElementById('reviewModal').classList.add('open');
-
-  // If this order was already reviewed (server-confirmed), show that
-  // instead of a form that would just fail on submit.
-  try {
-    const existing = await reviewsApi.getReviewForOrder(orderId);
-    if (existing) {
-      markOrderReviewed(orderId);
-      showReviewAlreadySubmitted();
-    }
-  } catch (_) { /* if the check fails, still let them try to submit */ }
-}
-
-function closeReviewModal(e) {
-  if (!e || e.target === document.getElementById('reviewModal')) {
-    document.getElementById('reviewModal').classList.remove('open');
-  }
-}
-
-function showReviewAlreadySubmitted() {
-  document.getElementById('reviewFormBody').innerHTML = `
-    <div class="review-success">
-      <div class="icon">✅</div>
-      <div style="font-weight:700;color:var(--txt);margin-bottom:4px;">You've already reviewed this order</div>
-      <div style="font-size:0.82rem;color:var(--txt2);">Thanks for the feedback — one review per order keeps things fair.</div>
-    </div>`;
-}
-
-async function submitReview() {
-  if (!currentReviewOrder) return;
-  const comment    = document.getElementById('reviewComment').value.trim();
-  const suggestion = document.getElementById('reviewSuggestion').value.trim();
-  if (!comment) { showToast('Please add a comment before submitting.'); return; }
-
-  const btn = document.getElementById('reviewSubmitBtn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-
-  try {
-    await reviewsApi.submitReview({
-      restaurantId:   currentReviewOrder.restaurantId,
-      restaurantName: currentReviewOrder.restaurantName,
-      orderId:        currentReviewOrder.orderId,
-      comment,
-      suggestion,
-    });
-    markOrderReviewed(currentReviewOrder.orderId);
-    document.getElementById('reviewFormBody').innerHTML = `
-      <div class="review-success">
-        <div class="icon">🎉</div>
-        <div style="font-weight:700;color:var(--txt);margin-bottom:4px;">Thanks for your review!</div>
-        <div style="font-size:0.82rem;color:var(--txt2);">${currentReviewOrder.restaurantName || 'The restaurant'} appreciates your feedback.</div>
-      </div>`;
-    showToast('Review submitted ✓');
-    // Refresh whichever list is currently open so the button flips to "done".
-    if (document.getElementById('trackPanelHistory').style.display !== 'none') renderOrderHistory();
-  } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'Submit Review';
-    if (err && err.message === 'already-reviewed') {
-      markOrderReviewed(currentReviewOrder.orderId);
-      showReviewAlreadySubmitted();
-    } else {
-      showToast('Could not submit your review. Please try again.');
-    }
-  }
+    </div>` : ''}
+    <button onclick="checkOrderStatus()" style="margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--txt2);font-size:0.78rem;cursor:pointer;">
+      🔄 Refresh Status
+    </button>`;
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
@@ -2603,10 +2127,8 @@ Object.assign(window, {
   selectRestaurant, selectCategory, selectVariant, modalQtyChange, toggleMod,
   confirmAddToCart, closeModal, adjustCartQty, clearCart, toggleCart,
   mobileGoBack, createOrder, copyOrderId, resetAfterOrder,
-  openTrackModal, closeTrackModal, checkOrderStatus, switchTrackTab,
+  openTrackModal, closeTrackModal, checkOrderStatus,
   openItemModal, applyFilters, debouncedApplyFilters, updateDeliveryFee,
-  scrollToCategory, toggleCategoryNav, toggleHistoryDetail,
-  openReviewModal, closeReviewModal, submitReview, toggleModalNotes,
 });
 </script>
 </body>
