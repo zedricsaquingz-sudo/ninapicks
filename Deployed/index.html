@@ -186,10 +186,10 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 .menu-sticky-bar{
   position:sticky;top:0;z-index:150;
   background:var(--bg);
-  margin:0 -22px;padding:12px 22px 10px;
+  margin:0 -22px;padding:12px 22px 0;
   border-bottom:1px solid var(--border);
 }
-.menu-search-wrap{position:relative;}
+.menu-search-wrap{position:relative;margin-bottom:10px;}
 .menu-search-icon{
   position:absolute;left:13px;top:50%;transform:translateY(-50%);
   color:var(--txt2);font-size:0.85rem;pointer-events:none;
@@ -208,44 +208,29 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 }
 .menu-search-clear:hover{color:var(--accent);}
 
-/* ── MENU LAYOUT: vertical category rail + scrolling item list ───────────
-   Same split-view pattern used by most delivery apps on phones and
-   desktop alike — a narrow always-visible category list on the left,
-   the actual menu on the right. Nothing here ever scrolls sideways. */
-.menu-layout{ display:flex; align-items:flex-start; gap:14px; }
-.category-rail{ flex:0 0 108px; min-width:0; }
-.menu-content-col{ flex:1; min-width:0; }
-@media(min-width:641px){
-  .category-rail{ flex-basis:168px; }
-}
-
-/* The rail's parent (.category-rail) is stretched by flex to match the
-   height of the menu content next to it; this inner element is what
-   actually sticks and travels within that tall box. Its `top` is set by
-   JS (positionCategoryRail) to sit exactly below the search bar, on
-   both mobile and desktop, without guessing pixel values in CSS. */
-.category-nav-vertical{
-  position:sticky;
-  display:flex;flex-direction:column;
-  max-height:calc(100vh - 16px);
-  overflow-y:auto;
-  padding-right:4px;
+/* ── MENU LAYOUT: single scrolling column, horizontal category tab strip ──
+   Foodpanda-style: a row of pill tabs sits inside the sticky bar, right
+   below the search box, and scrolls sideways if it overflows. The menu
+   itself is one plain vertical column underneath — nothing here ever
+   splits into a side-by-side rail + content layout anymore. */
+.menu-content-col{ min-width:0; }
+.category-tabs{
+  display:flex;gap:6px;overflow-x:auto;
+  padding:0 0 10px;margin:0 0 2px;
   scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
 }
-.category-nav-vertical::-webkit-scrollbar{display:none;}
-.category-nav-btn{
-  text-align:left;background:none;border:none;cursor:pointer;
-  padding:10px 12px;margin-bottom:2px;font-size:0.78rem;font-weight:600;
-  color:var(--txt2);line-height:1.3;white-space:normal;
-  border-left:3px solid transparent;border-radius:0 10px 10px 0;
-  transition:all 0.15s;
+.category-tabs::-webkit-scrollbar{display:none;}
+.category-tab{
+  flex:0 0 auto;white-space:nowrap;background:var(--card2);border:1.5px solid var(--border);
+  cursor:pointer;padding:7px 14px;font-size:0.78rem;font-weight:600;
+  color:var(--txt2);border-radius:20px;transition:all 0.15s;
 }
-.category-nav-btn:hover{color:var(--txt);background:var(--card2);}
-.category-nav-btn.active{
-  color:var(--primary);background:var(--selected-tint2);
-  border-left-color:var(--primary);
+.category-tab:hover{color:var(--txt);border-color:var(--accent);}
+.category-tab.active{
+  color:#fff;background:var(--primary);border-color:var(--primary);
 }
-.category-nav-btn .cat-count{font-size:0.65rem;opacity:0.7;font-weight:400;margin-left:3px;}
+.category-tab .cat-count{font-size:0.65rem;opacity:0.8;font-weight:400;margin-left:3px;}
 
 .menu-no-results{
   display:none;text-align:center;color:var(--txt2);font-size:0.85rem;
@@ -624,9 +609,9 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
      next to the category rail. */
   .cart-order-fields{ grid-template-columns:1fr; }
   .restaurant-detail{ padding:16px 14px; }
-  .menu-sticky-bar{ margin:0 -14px;padding:10px 14px 8px; }
-  .category-rail{ flex-basis:90px; }
-  .category-nav-btn{ padding:9px 8px;font-size:0.74rem; }
+  .menu-sticky-bar{ margin:0 -14px;padding:10px 14px 0; }
+  .category-tabs{ padding:0 0 8px; }
+  .category-tab{ padding:6px 11px;font-size:0.74rem; }
   header{ padding:10px 14px; }
   .filters{ gap:6px; }
   select,#searchBox{ font-size:0.79rem;min-width:0; }
@@ -1499,8 +1484,19 @@ function renderDetail() {
     }).join('');
   }
 
+  // Horizontal, sticky category tab strip — a row of pill tabs sitting
+  // inside the sticky bar right below the search box (Foodpanda-style),
+  // scrolling sideways on its own if it overflows. Being inside the same
+  // sticky element as the search box means it needs no JS-computed `top`
+  // offset the way the old vertical rail did.
+  const categoryTabsHtml = (activeCategories && activeCategories.length > 1) ? `<nav class="category-tabs" id="categoryNav">
+    ${activeCategories.map(c => `<button type="button" class="category-tab" data-cat="${c.id}" onclick="scrollToCategorySection('${c.id}')">${c.name}<span class="cat-count">${c.itemCount}</span></button>`).join('')}
+  </nav>` : '';
+
   // Sticky search bar (Foodpanda-style: seamless, no card box, sits right
-  // below the global header and above the scrolling menu).
+  // below the global header and above the scrolling menu), with the
+  // category tab strip stacked directly underneath it, inside the same
+  // sticky element.
   const searchPlaceholder = `Search &quot;${escAttr(r.name)}&quot;`;
   const stickyBarHtml = `<div class="menu-sticky-bar" id="menuStickyBar">
     <div class="menu-search-wrap">
@@ -1510,18 +1506,8 @@ function renderDetail() {
              oninput="filterMenuItems(this.value)">
       <button type="button" class="menu-search-clear" onclick="clearMenuSearch()" style="display:${menuSearchQuery ? '' : 'none'};">✕</button>
     </div>
+    ${categoryTabsHtml}
   </div>`;
-
-  // Vertical, sticky category rail — a plain top-to-bottom list (never
-  // scrolls sideways), sitting alongside the menu instead of above it.
-  // Its own `top` offset is set by JS (positionCategoryRail) right after
-  // this is inserted into the DOM, so it lines up under the search bar
-  // on both mobile and desktop without hard-coded pixel guesses here.
-  const categoryRailHtml = (activeCategories && activeCategories.length > 1) ? `<div class="category-rail">
-    <nav class="category-nav-vertical" id="categoryNav">
-      ${activeCategories.map(c => `<button type="button" class="category-nav-btn" data-cat="${c.id}" onclick="scrollToCategorySection('${c.id}')">${c.name}<span class="cat-count">${c.itemCount}</span></button>`).join('')}
-    </nav>
-  </div>` : '';
 
   const detailHtml = `<div class="restaurant-detail">
     <div class="detail-header">
@@ -1545,56 +1531,46 @@ function renderDetail() {
       ${linksHtml ? `<div class="detail-links">${linksHtml}</div>` : ''}
     </div>
     ${stickyBarHtml}
-    <div class="menu-layout">
-      ${categoryRailHtml}
-      <div class="menu-content-col">
-        ${isClosed
-          ? `<div class="closed-banner">🚫 This restaurant is currently closed. Ordering is disabled until it reopens.</div>`
-          : `<div class="tap-hint">Tap an item to add to order <span>Tap again to adjust</span></div>`}
-        ${menuHtml}
-        <div class="menu-no-results" id="menuNoResults">🔍 No items match your search.</div>
-      </div>
+    <div class="menu-content-col">
+      ${isClosed
+        ? `<div class="closed-banner">🚫 This restaurant is currently closed. Ordering is disabled until it reopens.</div>`
+        : `<div class="tap-hint">Tap an item to add to order <span>Tap again to adjust</span></div>`}
+      ${menuHtml}
+      <div class="menu-no-results" id="menuNoResults">🔍 No items match your search.</div>
     </div>
   </div>`;
 
-  if (isMobile()) {
+  // renderDetail() fully replaces the scrollable container's innerHTML —
+  // including on background re-renders that happen after the person has
+  // already scrolled down (e.g. a later category's items finishing their
+  // fetch, or a category tab load completing). Wiping the DOM resets that
+  // container's scroll position to 0, which used to yank the person back
+  // up to the top of the menu mid-browse. Capture the scroll offset right
+  // before the replace and restore it right after so a repaint is invisible
+  // unless the content actually changed height above the fold.
+  const isMob = isMobile();
+  const scrollContainer = isMob ? null : document.getElementById('orderPanel');
+  const prevScroll = isMob ? window.scrollY : (scrollContainer ? scrollContainer.scrollTop : 0);
+
+  if (isMob) {
     // Inject into mobile detail view, hide loader
     const loader  = document.getElementById('mobileMenuLoader');
     const content = document.getElementById('mobileDetailContent');
     if (loader)  loader.style.display = 'none';
     if (content) content.innerHTML = detailHtml;
+    if (prevScroll) window.scrollTo(0, prevScroll);
   } else {
     // Desktop: replace order panel
     document.getElementById('orderPanel').innerHTML = detailHtml;
+    if (prevScroll && scrollContainer) scrollContainer.scrollTop = prevScroll;
   }
 
   // The DOM was just fully replaced, so re-apply any in-progress search
-  // (e.g. a background category refresh triggered a repaint mid-search),
-  // position the sticky category rail right under the search bar, and
-  // (re)wire up its scroll-spy against the fresh elements.
+  // (e.g. a background category refresh triggered a repaint mid-search)
+  // and (re)wire up the scroll-spy against the fresh elements.
   if (menuSearchQuery) filterMenuItems(menuSearchQuery);
-  positionCategoryRail();
   initCategoryScrollSpy();
 }
-
-// Lines up the vertical category rail's sticky position right below the
-// search bar. Reads the search bar's own already-sticky `top` (which
-// itself differs mobile vs desktop via CSS) plus its rendered height,
-// rather than duplicating that offset logic here in JS.
-function positionCategoryRail() {
-  const bar = document.getElementById('menuStickyBar');
-  const nav = document.getElementById('categoryNav');
-  if (!bar || !nav) return;
-  const barTop = parseFloat(getComputedStyle(bar).top) || 0;
-  const offset = barTop + bar.offsetHeight + 8;
-  nav.style.top = offset + 'px';
-  nav.style.maxHeight = `calc(100vh - ${offset}px - 16px)`;
-}
-let railResizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(railResizeTimer);
-  railResizeTimer = setTimeout(positionCategoryRail, 120);
-});
 
 // ── Menu Search ──────────────────────────────────────────────────────────
 // Filters the already-rendered menu items in place (show/hide) rather than
@@ -1672,11 +1648,13 @@ function scrollToCategorySection(categoryId) {
 function setActiveCategoryNav(categoryId) {
   if (activeNavCategoryId === categoryId) return;
   activeNavCategoryId = categoryId;
-  document.querySelectorAll('.category-nav-btn').forEach(btn => {
+  document.querySelectorAll('.category-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.cat === categoryId);
   });
-  const activeBtn = document.querySelector(`.category-nav-btn[data-cat="${categoryId}"]`);
-  if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const activeBtn = document.querySelector(`.category-tab[data-cat="${categoryId}"]`);
+  // The tab strip only scrolls sideways now, so bring the active tab into
+  // view along its inline (horizontal) axis rather than the block axis.
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
 
 // As the user scrolls the menu, figure out which category section's top
