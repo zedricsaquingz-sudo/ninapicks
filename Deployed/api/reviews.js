@@ -5,16 +5,7 @@
 // api/payments.js modules (plain named exports, called from index.html as
 // `reviewsApi.getReviewForOrder(...)` / `reviewsApi.submitReview(...)`).
 //
-// IMPORTANT — please check this import:
-// I didn't have access to your existing api/*.js files, so I can't see
-// exactly how they construct/share their Supabase client. This assumes a
-// common pattern of a shared client exported from a sibling module. Adjust
-// the path/name below to match whatever orders.js/products.js actually use
-// (e.g. it might be `import { supabase } from './supabaseClient.js'` or a
-// client created inline with createClient(...) — use the same one so auth/
-// headers/config stay consistent).
-// ─────────────────────────────────────────────────────────────────────────
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabase-client.js';
 
 /**
  * Look up whether a review already exists for this order.
