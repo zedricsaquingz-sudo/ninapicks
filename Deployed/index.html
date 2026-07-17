@@ -209,26 +209,30 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 .menu-search-clear:hover{color:var(--accent);}
 
 /* ── MENU LAYOUT: single scrolling column, horizontal category tab strip ──
-   Foodpanda-style: a row of pill tabs sits inside the sticky bar, right
-   below the search box, and scrolls sideways if it overflows. The menu
-   itself is one plain vertical column underneath — nothing here ever
-   splits into a side-by-side rail + content layout anymore. */
+   Foodpanda-style: a row of plain-text tabs sits inside the sticky bar,
+   right below the search box, and scrolls sideways if it overflows. No
+   pill/box chrome on the tabs themselves — just a bottom-border/underline
+   to mark which one is active, sitting on the hairline that already
+   separates the sticky bar from the menu. The menu itself is one plain
+   vertical column underneath — nothing here ever splits into a side-by-
+   side rail + content layout anymore. */
 .menu-content-col{ min-width:0; }
 .category-tabs{
-  display:flex;gap:6px;overflow-x:auto;
-  padding:0 0 10px;margin:0 0 2px;
+  display:flex;gap:18px;overflow-x:auto;
+  padding:0 0 10px;margin:0 0 -1px;
   scrollbar-width:none;
   -webkit-overflow-scrolling:touch;
 }
 .category-tabs::-webkit-scrollbar{display:none;}
 .category-tab{
-  flex:0 0 auto;white-space:nowrap;background:var(--card2);border:1.5px solid var(--border);
-  cursor:pointer;padding:7px 14px;font-size:0.78rem;font-weight:600;
-  color:var(--txt2);border-radius:20px;transition:all 0.15s;
+  flex:0 0 auto;white-space:nowrap;background:none;border:none;
+  border-bottom:2px solid transparent;
+  cursor:pointer;padding:4px 1px 8px;font-size:0.8rem;font-weight:600;
+  color:var(--txt2);transition:all 0.15s;
 }
-.category-tab:hover{color:var(--txt);border-color:var(--accent);}
+.category-tab:hover{color:var(--txt);}
 .category-tab.active{
-  color:#fff;background:var(--primary);border-color:var(--primary);
+  color:var(--primary);border-bottom-color:var(--primary);
 }
 .category-tab .cat-count{font-size:0.65rem;opacity:0.8;font-weight:400;margin-left:3px;}
 
@@ -610,8 +614,8 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   .cart-order-fields{ grid-template-columns:1fr; }
   .restaurant-detail{ padding:16px 14px; }
   .menu-sticky-bar{ margin:0 -14px;padding:10px 14px 0; }
-  .category-tabs{ padding:0 0 8px; }
-  .category-tab{ padding:6px 11px;font-size:0.74rem; }
+  .category-tabs{ padding:0 0 8px;gap:14px; }
+  .category-tab{ padding:4px 1px 7px;font-size:0.76rem; }
   header{ padding:10px 14px; }
   .filters{ gap:6px; }
   select,#searchBox{ font-size:0.79rem;min-width:0; }
