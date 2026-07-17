@@ -188,6 +188,21 @@
   .modal-row .k{color:var(--txt2);}
   .modal-row .v{font-weight:600;text-align:right;}
   .modal-items{font-size:0.85rem;line-height:1.6;background:var(--card2);border-radius:10px;padding:10px 12px;white-space:pre-wrap;}
+
+  /* Per-line item list — replaces the single comma-joined paragraph
+     that used to sit inside .modal-items, which was hard to scan for
+     orders with several items or add-ons. */
+  .order-items-list{background:var(--card2);border-radius:10px;padding:8px 12px;}
+  .oi-row{
+    display:flex;align-items:baseline;gap:6px;padding:4px 0;
+    font-size:0.82rem;color:var(--txt);border-bottom:1px dashed var(--border);
+  }
+  .oi-row:last-child{border-bottom:none;}
+  .oi-qty{flex:0 0 auto;font-weight:700;color:var(--txt2);min-width:26px;}
+  .oi-name{flex:1;min-width:0;}
+  .oi-variant{color:var(--txt2);font-weight:400;}
+  .oi-mods{font-size:0.72rem;color:var(--txt2);margin-top:1px;}
+  .oi-price{flex:0 0 auto;font-weight:600;color:var(--txt2);white-space:nowrap;font-size:0.78rem;}
   .modal-copy-btn{margin-left:auto;font-size:0.72rem;padding:5px 10px;border-radius:8px;border:1px solid var(--border);
     background:var(--card2);color:var(--txt2);cursor:pointer;}
   .modal-copy-btn:hover{border-color:var(--primary);color:var(--primary);}
@@ -313,6 +328,25 @@ let state = { orders: [], drivers: [], activity: [], restaurants: [], orderStats
 let countdownTimer = null, secondsLeft = REFRESH_SECONDS;
 
 function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Per-line item list — falls back to the old flat text if an order has
+// no structured line items (e.g. a very old order placed before
+// order_items existed), so nothing old ever renders blank.
+function renderOrderItemsList(o) {
+  if (Array.isArray(o.orderItems) && o.orderItems.length) {
+    return `<div class="order-items-list">${o.orderItems.map(it => {
+      const variant = it.variant ? ` <span class="oi-variant">(${esc(it.variant)})</span>` : '';
+      const mods = it.modifiers && it.modifiers.length
+        ? `<div class="oi-mods">+ ${it.modifiers.map(m => esc(m.name)).join(', +')}</div>` : '';
+      return `<div class="oi-row">
+        <span class="oi-qty">${it.quantity}×</span>
+        <span class="oi-name">${esc(it.name)}${variant}${mods}</span>
+        <span class="oi-price">₱${it.subtotal.toFixed(2)}</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  return `<div class="modal-items">${esc(o.items) || '— (no items on this order — check order_items RLS if unexpected)'}</div>`;
+}
 function peso(n){ return '₱' + (Number(n)||0).toLocaleString('en-PH', {minimumFractionDigits:0, maximumFractionDigits:2}); }
 
 // Orders now come back with real ISO timestamps from Postgres, so this
@@ -615,7 +649,7 @@ function openOrderModal(orderId){
 
     <div class="modal-section">
       <h4>Items</h4>
-      <div class="modal-items">${esc(o.items) || '— (no items on this order — check order_items RLS if unexpected)'}</div>
+      ${renderOrderItemsList(o)}
     </div>
 
     <div class="modal-section">
@@ -709,13 +743,22 @@ async function updateStatusFromModal(orderId) {
 function copyOrderDetails(orderId) {
   const o = findOrder(orderId);
   if (!o) return;
+  const itemsBlock = (Array.isArray(o.orderItems) && o.orderItems.length)
+    ? o.orderItems.map(it => {
+        const variant = it.variant ? ` (${it.variant})` : '';
+        const mods = it.modifiers && it.modifiers.length ? ` +${it.modifiers.map(m => m.name).join('+')}` : '';
+        return `  ${it.quantity}x ${it.name}${variant}${mods} — ₱${it.subtotal.toFixed(2)}`;
+      }).join('\n')
+    : `  ${o.items || '—'}`;
+
   const lines = [
     `Order ${o.orderId}`,
     `Status: ${o.status}`,
     `Customer: ${o.name || 'Guest'}${o.phone ? ' · ' + o.phone : ''}`,
     o.location ? `Location: ${o.location}` : null,
     `Shop: ${o.restaurantName || ''}`,
-    `Items: ${o.items || '—'}`,
+    `Items:`,
+    itemsBlock,
     `Total: ${peso(o.total)}`,
     o.paymentMethod ? `Payment: ${o.paymentMethod}` : null,
     o.notes ? `Notes: ${o.notes}` : null,
