@@ -31,6 +31,7 @@
   --selected-tint: #1A1040;
   --selected-tint2: #1E1038;
   --selected-tint3: #14103A;
+  --header-h: 130px; /* measured precisely by JS on load/resize; this is just the initial guess */
   color-scheme: dark;
 }
 /* Follows the OS/browser light-dark preference automatically — this is
@@ -177,24 +178,58 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   text-transform:none;letter-spacing:0;
 }
 
-/* ── CATEGORY TABS (unused now that categories render stacked, kept in
-   case a future tab/quick-jump nav wants this styling again) ───────────── */
-.category-tabs{
-  display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px;
-  border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;
+/* ── MENU STICKY BAR (search + category nav) ─────────────────────────────
+   Seamless, Foodpanda-style: no card box, no border-radius "panel" —
+   just the page background bleeding edge-to-edge, sitting sticky right
+   below the global header, with a single hairline to separate it from
+   the menu content scrolling underneath. */
+.menu-sticky-bar{
+  position:sticky;top:0;z-index:150;
+  background:var(--bg);
+  margin:0 -22px;padding:12px 22px 10px;
+  border-bottom:1px solid var(--border);
 }
-.category-tabs::-webkit-scrollbar{display:none;}
-.category-tab{
-  flex:0 0 auto;font-size:0.76rem;font-weight:600;padding:7px 13px;
-  border-radius:999px;border:1.5px solid var(--border);background:var(--card2);
-  color:var(--txt2);cursor:pointer;transition:all 0.15s;white-space:nowrap;
+.menu-search-wrap{position:relative;}
+.menu-search-icon{
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  color:var(--txt2);font-size:0.85rem;pointer-events:none;
 }
-.category-tab:hover{border-color:var(--accent);color:var(--accent);}
-.category-tab.active{
-  background:var(--primary);border-color:var(--primary);color:#fff;
+.menu-search-input{
+  width:100%;padding:10px 34px 10px 34px;border-radius:22px;
+  border:1.5px solid var(--border);background:var(--card2);color:var(--txt);
+  font-size:0.85rem;
 }
-.category-tab .cat-count{
-  font-size:0.65rem;opacity:0.75;margin-left:3px;
+.menu-search-input::placeholder{color:var(--txt2);}
+.menu-search-input:focus{outline:none;border-color:var(--accent);}
+.menu-search-clear{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--txt2);cursor:pointer;
+  font-size:0.95rem;padding:6px;line-height:1;
+}
+.menu-search-clear:hover{color:var(--accent);}
+
+/* ── CATEGORY NAV (horizontal, sticky, tab-underline style — no boxes) ─── */
+.category-nav{
+  display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;margin-top:10px;
+}
+.category-nav::-webkit-scrollbar{display:none;}
+.category-nav-btn{
+  flex:0 0 auto;background:none;border:none;cursor:pointer;
+  font-size:0.82rem;font-weight:600;color:var(--txt2);
+  padding:8px 4px 10px;margin-right:22px;white-space:nowrap;
+  position:relative;transition:color 0.15s;
+}
+.category-nav-btn:last-child{margin-right:4px;}
+.category-nav-btn:hover{color:var(--txt);}
+.category-nav-btn.active{color:var(--primary);}
+.category-nav-btn.active::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:3px;
+  border-radius:3px;background:var(--primary);
+}
+.menu-no-results{
+  display:none;text-align:center;color:var(--txt2);font-size:0.85rem;
+  padding:44px 12px;
 }
 
 /* ── MENU SECTION ───────────────────────────────────────────────────────── */
@@ -271,38 +306,69 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
 .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
 .modal-title{font-size:1.05rem;font-weight:700;margin-bottom:4px;color:var(--txt);}
 .modal-cat{font-size:0.72rem;color:var(--txt2);margin-bottom:6px;}
-.modal-notes{font-size:0.77rem;color:var(--warn);margin-bottom:10px;font-style:italic;}
-.modal-price{font-size:1.15rem;font-weight:700;color:var(--success);margin-bottom:16px;}
 
-/* variant selector in modal */
-.modal-variants{margin-bottom:16px;}
-.modal-variants-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);margin-bottom:8px;}
+/* Description: collapsed by default behind a "more" toggle so a long
+   paragraph doesn't push variants/add-ons off the visible screen. */
+.modal-notes{font-size:0.77rem;color:var(--txt2);margin-bottom:10px;line-height:1.45;}
+.modal-notes.collapsed{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.modal-notes-toggle{
+  font-size:0.72rem;color:var(--accent);font-weight:600;cursor:pointer;
+  margin:-6px 0 10px;display:inline-block;
+}
+.modal-price{font-size:1.15rem;font-weight:700;color:var(--success);margin-bottom:14px;}
+
+/* Section header row shared by variants + add-ons: label on the left,
+   Required/Optional badge on the right so the two are unmistakable
+   at a glance. */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.section-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);font-weight:700;}
+.section-badge{font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.3px;}
+.section-badge.required{background:rgba(248,113,113,0.15);color:var(--danger);}
+.section-badge.optional{background:rgba(161,161,170,0.15);color:var(--txt2);}
+
+/* variant selector in modal -- compact scannable grid instead of a tall
+   single-column stack, with a max-height + scroll once a menu item has
+   enough flavors/sizes to otherwise run off the screen (e.g. 6+ options). */
+.modal-variants{margin-bottom:14px;}
+.variant-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;
+}
+.variant-grid.scrollable{max-height:230px;overflow-y:auto;padding-right:2px;}
 .variant-option{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);
-  margin-bottom:6px;cursor:pointer;transition:all 0.15s;background:var(--card2);
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:9px 10px;border-radius:9px;border:1.5px solid var(--border);
+  cursor:pointer;transition:all 0.15s;background:var(--card2);min-width:0;
 }
 .variant-option:hover{border-color:var(--primary);}
 .variant-option.selected{border-color:var(--primary);background:var(--selected-tint);}
 .variant-option.unavail{opacity:0.35;cursor:not-allowed;pointer-events:none;}
-.variant-name{font-size:0.84rem;color:var(--txt);}
-.variant-price{font-size:0.84rem;color:var(--accent);font-weight:600;}
+.variant-name{font-size:0.8rem;color:var(--txt);font-weight:600;line-height:1.25;}
+.variant-price{font-size:0.74rem;color:var(--accent);font-weight:600;}
 
-/* modifier section */
-.modal-modifiers{margin-bottom:16px;padding-top:12px;border-top:1px solid var(--border);}
-.modal-modifiers-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--txt2);margin-bottom:8px;}
-#modalMods{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+/* modifier / add-on section -- bigger, easier-to-tap cards so add-ons feel
+   like a natural, first-class part of ordering rather than an afterthought. */
+.modal-modifiers{margin-bottom:14px;padding-top:12px;border-top:1px solid var(--border);}
+#modalMods{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+#modalMods.scrollable{max-height:280px;overflow-y:auto;padding-right:2px;}
 .modifier-option{
-  display:flex;align-items:center;justify-content:space-between;gap:6px;
-  padding:8px 10px;border-radius:8px;border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 13px;border-radius:10px;border:1.5px solid var(--border);
   cursor:pointer;transition:all 0.15s;background:var(--card2);min-width:0;
 }
 .modifier-option:hover{border-color:var(--accent);}
 .modifier-option.selected{border-color:var(--accent);background:var(--selected-tint3);}
-.modifier-name{font-size:0.78rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.modifier-name{font-size:0.83rem;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .modifier-price{font-size:0.76rem;color:var(--accent);font-weight:600;flex-shrink:0;}
-.modifier-check{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;}
+.modifier-check{
+  width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+}
 .modifier-option.selected .modifier-check{background:var(--accent);border-color:var(--accent);}
+.modifier-check::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;
+  transform:rotate(45deg) translate(-1px,-1px);opacity:0;transition:opacity 0.1s;}
+.modifier-option.selected .modifier-check::after{opacity:1;}
 .modifier-loading{grid-column:1 / -1;padding:10px 0;color:var(--txt2);font-size:0.8rem;}
 
 .modal-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -470,7 +536,14 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   padding:11px 16px;background:var(--card);
   border-bottom:1px solid var(--border);cursor:pointer;
   font-size:0.85rem;color:var(--accent);font-weight:600;
-  position:sticky;top:0;z-index:10;
+  position:sticky;top:0;z-index:190;
+}
+/* On mobile the whole page scrolls as one (the header itself is sticky
+   at the true top:0), so anything after it that also wants to stick has
+   to offset by the header's real height, or the two would sit on top of
+   each other. --header-h is measured live by JS. */
+@media(max-width:640px){
+  .mobile-back-btn{ top:var(--header-h,60px); }
 }
 .mobile-back-btn:active{background:var(--card2);}
 
@@ -514,6 +587,11 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
   }
   #mobileListPlaceholder .icon{font-size:3rem;opacity:0.2;}
   #mobileListPlaceholder p{font-size:0.88rem;}
+
+  /* Menu sticky bar sits below both the global header and the mobile
+     back button, all of which are sticky in the same page-scroll — stack
+     their offsets so nothing overlaps. 46px ≈ back button's own height. */
+  .menu-sticky-bar{ top:calc(var(--header-h,60px) + 46px); }
 
   /* Menu grid: 2 columns on mobile */
   .menu-grid{ grid-template-columns:1fr 1fr; }
@@ -616,17 +694,24 @@ select:focus,#searchBox:focus{outline:2px solid var(--accent);border-color:var(-
     <img class="modal-photo" id="modalPhoto" src="" alt="" style="display:none;">
     <div class="modal-title" id="modalName"></div>
     <div class="modal-cat"  id="modalCat"></div>
-    <div class="modal-notes" id="modalNotes"></div>
+    <div class="modal-notes collapsed" id="modalNotes"></div>
+    <span class="modal-notes-toggle" id="modalNotesToggle" onclick="toggleModalNotes()" style="display:none;">Show more</span>
 
     <!-- Variant selector -->
     <div class="modal-variants" id="modalVariantsSection" style="display:none;">
-      <div class="modal-variants-label">Choose option</div>
-      <div id="modalVariants"></div>
+      <div class="section-header">
+        <span class="section-label">Choose an option</span>
+        <span class="section-badge required">Required</span>
+      </div>
+      <div id="modalVariants" class="variant-grid"></div>
     </div>
 
     <!-- Modifier selector -->
     <div class="modal-modifiers" id="modalModsSection" style="display:none;">
-      <div class="modal-modifiers-label">Add-ons</div>
+      <div class="section-header">
+        <span class="section-label">Add-ons</span>
+        <span class="section-badge optional">Optional</span>
+      </div>
       <div id="modalMods"></div>
     </div>
 
@@ -735,6 +820,12 @@ let activeMenu      = null;
 let activeCategories  = [];        // [{id, name, itemCount}] for the open restaurant
 let activeCategoryId  = null;      // which tab is currently selected
 let loadedCategoryIds = new Set(); // category ids already fetched this session
+
+// ── Menu search + sticky category-nav state ─────────────────────────────
+let menuSearchQuery      = '';    // current text in the per-restaurant menu search box
+let activeNavCategoryId  = null;  // which category is highlighted in the sticky nav (scroll-spy)
+let categoryScrollTarget = null;  // window (mobile) or #orderPanel (desktop) — whichever actually scrolls
+let categoryScrollHandler = null; // bound listener, so we can remove it cleanly
 let cart            = [];
 let cartExpanded    = false;
 let modalProduct    = null;
@@ -761,6 +852,13 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferr
 // restaurant's legacy_code (r.id) or a slug built from its name — no
 // backend/schema change needed since allRestaurants is already fully
 // loaded client-side for the picker.
+// Minimal attribute escaping — enough for restaurant names that contain
+// a literal " (we wrap them in one for the search placeholder) or an
+// apostrophe (e.g. "McDonald's"), without pulling in a full HTML escaper.
+function escAttr(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 function slugify(name) {
   return String(name || '').trim().toLowerCase()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -818,6 +916,7 @@ function handlePopState() {
 
 // ── Startup ───────────────────────────────────────────────────────────────
 (async function init() {
+  updateHeaderHeightVar();
   loadCartFromStorage();
   await loadRestaurants();
   applyFilters();
@@ -896,6 +995,20 @@ function buildCategoryFilter() {
 // ── Mobile helpers ────────────────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 640; }
 
+// The header's real rendered height (it wraps to more/fewer lines
+// depending on viewport width), used so the mobile back button and the
+// menu sticky bar can offset below it instead of guessing a fixed px
+// value that only happens to be right sometimes.
+function updateHeaderHeightVar() {
+  const header = document.querySelector('header');
+  if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+}
+let headerHeightResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(headerHeightResizeTimer);
+  headerHeightResizeTimer = setTimeout(updateHeaderHeightVar, 120);
+});
+
 function showMobileListView() {
   const lv = document.getElementById('mobileListView');
   const dv = document.getElementById('mobileDetailView');
@@ -919,6 +1032,9 @@ function mobileGoBack() {
   activeCategories  = [];
   activeCategoryId  = null;
   loadedCategoryIds = new Set();
+  menuSearchQuery     = '';
+  activeNavCategoryId = null;
+  cleanupCategoryScrollSpy();
   cart = [];
   saveCartToStorage();
   updateCartBar();
@@ -1049,6 +1165,9 @@ async function selectRestaurant(id, { updateUrl = true } = {}) {
   activeCategories  = [];
   activeCategoryId  = null;
   loadedCategoryIds = new Set();
+  menuSearchQuery     = '';
+  activeNavCategoryId = null;
+  cleanupCategoryScrollSpy();
 
   if (updateUrl && activeRest) {
     const newPath = '/' + (slugify(activeRest.name) || activeRest.id);
@@ -1287,7 +1406,6 @@ function renderDetail() {
       <span class="qty-badge" id="qbadge-${gi}"></span>
       ${prod.imageUrl ? `<img class="item-thumb" src="${prod.imageUrl}" alt="" loading="lazy" onerror="this.remove()">` : ''}
       <div class="item-name">${prod.name}</div>
-      ${prod.description ? `<div class="item-notes">★ ${prod.description}</div>` : ''}
       <div class="item-price">${prod.basePrice === 0 && !(prod.variants && prod.variants.length) ? '<span class="free-badge">Included / Free</span>' : priceDisplay}</div>
       ${pillsSection}
       ${isUnavail ? `<div class="unavail-tag">🚫 ${isClosed ? 'Shop closed' : 'Not available'}</div>` : ''}
@@ -1310,9 +1428,25 @@ function renderDetail() {
           ? `<div class="menu-grid">${itemsForCat.map(renderMenuItem).join('')}</div>`
           : `<div style="color:var(--txt2);font-size:0.85rem;padding:0 0 16px;">No items in this category.</div>`;
       }
-      return `<div class="menu-section"><h3>${c.name}<span class="cat-count">${c.itemCount}</span></h3>${sectionHtml}</div>`;
+      return `<div class="menu-section" id="cat-section-${c.id}"><h3>${c.name}<span class="cat-count">${c.itemCount}</span></h3>${sectionHtml}</div>`;
     }).join('');
   }
+
+  // Sticky search + category nav bar (Foodpanda-style: seamless, no card
+  // box, sits right below the global header and above the scrolling menu).
+  const searchPlaceholder = `Search &quot;${escAttr(r.name)}&quot;`;
+  const stickyBarHtml = `<div class="menu-sticky-bar" id="menuStickyBar">
+    <div class="menu-search-wrap">
+      <span class="menu-search-icon">🔍</span>
+      <input type="text" id="menuSearchInput" class="menu-search-input"
+             placeholder="${searchPlaceholder}" value="${escAttr(menuSearchQuery)}"
+             oninput="filterMenuItems(this.value)">
+      <button type="button" class="menu-search-clear" onclick="clearMenuSearch()" style="display:${menuSearchQuery ? '' : 'none'};">✕</button>
+    </div>
+    ${activeCategories && activeCategories.length > 1 ? `<nav class="category-nav" id="categoryNav">
+      ${activeCategories.map(c => `<button type="button" class="category-nav-btn" data-cat="${c.id}" onclick="scrollToCategorySection('${c.id}')">${c.name}</button>`).join('')}
+    </nav>` : ''}
+  </div>`;
 
   const detailHtml = `<div class="restaurant-detail">
     <div class="detail-header">
@@ -1335,10 +1469,12 @@ function renderDetail() {
       </div>
       ${linksHtml ? `<div class="detail-links">${linksHtml}</div>` : ''}
     </div>
+    ${stickyBarHtml}
     ${isClosed
       ? `<div class="closed-banner">🚫 This restaurant is currently closed. Ordering is disabled until it reopens.</div>`
       : `<div class="tap-hint">Tap an item to add to order <span>Tap again to adjust</span></div>`}
     ${menuHtml}
+    <div class="menu-no-results" id="menuNoResults">🔍 No items match your search.</div>
   </div>`;
 
   if (isMobile()) {
@@ -1351,6 +1487,132 @@ function renderDetail() {
     // Desktop: replace order panel
     document.getElementById('orderPanel').innerHTML = detailHtml;
   }
+
+  // The DOM was just fully replaced, so re-apply any in-progress search
+  // (e.g. a background category refresh triggered a repaint mid-search)
+  // and (re)wire up the sticky category nav's scroll-spy against the
+  // fresh elements.
+  if (menuSearchQuery) filterMenuItems(menuSearchQuery);
+  initCategoryScrollSpy();
+}
+
+// ── Menu Search ──────────────────────────────────────────────────────────
+// Filters the already-rendered menu items in place (show/hide) rather than
+// re-rendering, so the search input never loses focus/cursor position or
+// dismisses the on-screen keyboard while the person is mid-type.
+function filterMenuItems(query) {
+  menuSearchQuery = query || '';
+  const q = menuSearchQuery.trim().toLowerCase();
+
+  const clearBtn = document.querySelector('.menu-search-clear');
+  if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+
+  let anyVisible = false;
+  activeCategories.forEach(c => {
+    const sectionEl = document.getElementById('cat-section-' + c.id);
+    if (!sectionEl) return;
+
+    if (!q) { sectionEl.style.display = ''; return; } // no query — everything shows, untouched
+
+    if (!loadedCategoryIds.has(c.id)) { sectionEl.style.display = ''; return; } // still loading, leave as-is
+
+    let catHasVisible = false;
+    activeMenu.products
+      .filter(p => p._category === c.id)
+      .forEach(p => {
+        const gi = activeMenu.products.indexOf(p);
+        const el = document.getElementById('mi-' + gi);
+        if (!el) return;
+        const matches = (p.name && p.name.toLowerCase().includes(q)) ||
+                         (p.description && p.description.toLowerCase().includes(q));
+        el.style.display = matches ? '' : 'none';
+        if (matches) catHasVisible = true;
+      });
+
+    sectionEl.style.display = catHasVisible ? '' : 'none';
+    if (catHasVisible) anyVisible = true;
+  });
+
+  const noResultsEl = document.getElementById('menuNoResults');
+  if (noResultsEl) noResultsEl.style.display = (q && !anyVisible) ? 'block' : 'none';
+}
+
+function clearMenuSearch() {
+  menuSearchQuery = '';
+  const input = document.getElementById('menuSearchInput');
+  if (input) { input.value = ''; input.focus(); }
+  filterMenuItems('');
+}
+
+// ── Sticky Category Nav: tap-to-jump + scroll-spy ─────────────────────────
+// Every category's items are already loaded and stacked on the page (see
+// loadMenu above), so "selecting" a category just means smooth-scrolling
+// that section into view right below the sticky bar — no data fetch, no
+// re-render, no hiding of other categories.
+function scrollToCategorySection(categoryId) {
+  const sectionEl = document.getElementById('cat-section-' + categoryId);
+  const barEl     = document.getElementById('menuStickyBar');
+  if (!sectionEl) return;
+
+  const barHeight = barEl ? barEl.getBoundingClientRect().height : 0;
+  const gap = 10; // small breathing room below the sticky bar
+
+  if (isMobile()) {
+    const targetY = window.scrollY + sectionEl.getBoundingClientRect().top - barHeight - gap;
+    window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+  } else {
+    const panel = document.getElementById('orderPanel');
+    if (!panel) return;
+    const targetY = panel.scrollTop + sectionEl.getBoundingClientRect().top - panel.getBoundingClientRect().top - barHeight - gap;
+    panel.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+  }
+  setActiveCategoryNav(categoryId); // instant feedback; scroll-spy will confirm right after
+}
+
+function setActiveCategoryNav(categoryId) {
+  if (activeNavCategoryId === categoryId) return;
+  activeNavCategoryId = categoryId;
+  document.querySelectorAll('.category-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.cat === categoryId);
+  });
+  const activeBtn = document.querySelector(`.category-nav-btn[data-cat="${categoryId}"]`);
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+// As the user scrolls the menu, figure out which category section's top
+// has passed just below the sticky bar, and highlight that one's nav tab.
+function onCategoryScroll() {
+  const barEl = document.getElementById('menuStickyBar');
+  if (!barEl || !activeCategories.length) return;
+  const line = barEl.getBoundingClientRect().bottom + 2; // detection line just under the sticky bar
+
+  let currentId = activeCategories[0].id;
+  for (const c of activeCategories) {
+    const el = document.getElementById('cat-section-' + c.id);
+    if (!el) continue;
+    if (el.getBoundingClientRect().top - line <= 0) currentId = c.id;
+    else break; // sections are in document order — the rest are still below the line
+  }
+  setActiveCategoryNav(currentId);
+}
+
+function initCategoryScrollSpy() {
+  cleanupCategoryScrollSpy();
+  if (!activeCategories || activeCategories.length < 2) return;
+  categoryScrollTarget  = isMobile() ? window : document.getElementById('orderPanel');
+  categoryScrollHandler = () => onCategoryScroll();
+  if (categoryScrollTarget) {
+    categoryScrollTarget.addEventListener('scroll', categoryScrollHandler, { passive: true });
+    onCategoryScroll(); // set the initial highlighted tab
+  }
+}
+
+function cleanupCategoryScrollSpy() {
+  if (categoryScrollTarget && categoryScrollHandler) {
+    categoryScrollTarget.removeEventListener('scroll', categoryScrollHandler);
+  }
+  categoryScrollTarget  = null;
+  categoryScrollHandler = null;
 }
 
 // ── Item Modal ─────────────────────────────────────────────────────────────
@@ -1373,8 +1635,21 @@ function openItemModal(productIdx) {
 
   document.getElementById('modalName').textContent  = prod.name;
   document.getElementById('modalCat').textContent   = prod.category || '';
-  document.getElementById('modalNotes').textContent = prod.description || '';
-  document.getElementById('modalNotes').style.display = prod.description ? 'block' : 'none';
+  const notesEl  = document.getElementById('modalNotes');
+  const toggleEl = document.getElementById('modalNotesToggle');
+  notesEl.textContent = prod.description || '';
+  notesEl.style.display = prod.description ? 'block' : 'none';
+  notesEl.classList.add('collapsed');
+  toggleEl.textContent = 'Show more';
+  toggleEl.style.display = 'none';
+  if (prod.description) {
+    // Only show the toggle if the text actually overflows 2 lines --
+    // measured after layout so short descriptions never show a
+    // pointless "Show more" that has nothing to expand.
+    requestAnimationFrame(() => {
+      if (notesEl.scrollHeight > notesEl.clientHeight + 2) toggleEl.style.display = 'inline-block';
+    });
+  }
   const modalPhotoEl = document.getElementById('modalPhoto');
   if (prod.imageUrl) {
     modalPhotoEl.src = prod.imageUrl;
@@ -1398,6 +1673,9 @@ function openItemModal(productIdx) {
         <span class="variant-price">${adj}</span>
       </div>`;
     }).join('');
+    // Long lists (6+) get a fixed-height scroll box instead of pushing
+    // everything below them off the visible screen.
+    varDiv.classList.toggle('scrollable', prod.variants.length > 6);
     varSec.style.display = 'block';
   } else {
     varSec.style.display = 'none';
@@ -1415,6 +1693,13 @@ function openItemModal(productIdx) {
   if (pending) {
     pending.then(() => { if (modalProduct === prod) { renderModalModifiers(); updateModalPrice(); } });
   }
+}
+
+function toggleModalNotes() {
+  const notesEl  = document.getElementById('modalNotes');
+  const toggleEl = document.getElementById('modalNotesToggle');
+  const nowCollapsed = notesEl.classList.toggle('collapsed');
+  toggleEl.textContent = nowCollapsed ? 'Show more' : 'Show less';
 }
 
 function selectVariant(vi) {
@@ -1452,6 +1737,9 @@ function renderModalModifiers() {
       <div class="modifier-check"></div>
     </div>`;
   }).join('');
+  // Long add-on lists (9+) get a fixed-height scroll box for the same
+  // reason as the variant grid -- keeps qty/total/order button reachable.
+  modDiv.classList.toggle('scrollable', mods.length > 8);
 }
 
 function toggleMod(modId) {
@@ -2055,6 +2343,7 @@ Object.assign(window, {
   mobileGoBack, createOrder, copyOrderId, resetAfterOrder,
   openTrackModal, closeTrackModal, checkOrderStatus,
   openItemModal, applyFilters, debouncedApplyFilters, updateDeliveryFee,
+  filterMenuItems, clearMenuSearch, scrollToCategorySection,
 });
 </script>
 </body>
